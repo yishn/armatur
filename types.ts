@@ -1,4 +1,5 @@
 import type { Table } from "./table.ts";
+import type { TablePromise } from "./table_promise.ts";
 import type { DataSource } from "./data_source.ts";
 
 export type Value = string | boolean | number | Date | null;
@@ -6,6 +7,12 @@ export type Value = string | boolean | number | Date | null;
 export type Row = Record<string, Value>;
 
 export type IntoTable<R extends Row> = Table<R> | R[];
+
+export type IntoTablePromise<R extends Row> =
+  | IntoTable<R>
+  | TablePromise<R>
+  | Promise<IntoTable<R>>
+  | (() => Promise<IntoTable<R>>);
 
 export type IntoDataSource<P extends Row, R extends Row> =
   | DataSource<P, R>
@@ -46,11 +53,12 @@ export type Entities<
   >;
 };
 
-export interface DataChangeEvent {
-  entities: string[];
+export interface DataChangeEvent<D extends Record<string, DataSource>> {
+  dataSource: keyof D;
+  views: string[];
 }
 
-type ViewKey<V extends object, K extends keyof V> = K extends string
+export type ViewKey<V extends object, K extends keyof V> = K extends string
   ? V[K] extends () => Table ? K : never
   : never;
 

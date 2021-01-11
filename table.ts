@@ -2,7 +2,7 @@ import type { FoldIterFn, IntoTable, IterFn, Row, Value } from "./types.ts";
 import { addValues, compareValues } from "./utils.ts";
 
 export class Table<R extends Row = Row> {
-  data: readonly Readonly<R>[];
+  readonly data: readonly Readonly<R>[];
 
   constructor(data: IntoTable<R>) {
     if (Array.isArray(data)) {

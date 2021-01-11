@@ -3,7 +3,7 @@ import {
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.83.0/testing/asserts.ts";
-import { Table } from "../table.ts";
+import { Table } from "../mod.ts";
 
 let table = new Table([1, 2, 3].map((val) => ({ val })));
 
@@ -25,8 +25,9 @@ Deno.test("Table#(all|any)", () => {
   assert(!table.any((row) => row.val === 4));
 });
 
-Deno.test("Table#(sumBy|averageBy)", () => {
+Deno.test("Table#(sumBy|averageBy|fold)", () => {
   assertEquals(table.sumBy((row) => row.val), 1 + 2 + 3);
+  assertEquals(table.fold(0, (acc, row) => acc + row.val), 1 + 2 + 3);
   assertEquals(
     new Table<{ val: number }>([]).sumBy((row) => row.val),
     undefined,
