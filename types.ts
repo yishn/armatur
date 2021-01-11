@@ -30,7 +30,7 @@ export interface DataSourceConfig<D extends DataSource> {
 }
 
 export type DataSourcesConfig<D extends Record<string, DataSource>> = {
-  [K in keyof D]: DataSourceConfig<D[K]>
+  [K in keyof D]: DataSourceConfig<D[K]>;
 };
 
 export type Entities<
@@ -49,3 +49,11 @@ export type Entities<
 export interface DataChangeEvent {
   entities: string[];
 }
+
+type ViewKey<V extends object, K extends keyof V> = K extends string
+  ? V[K] extends () => Table ? K : never
+  : never;
+
+export type Views<V extends object> = {
+  [K in ViewKey<V, keyof V>]: V[K] extends () => Table ? V[K] : never;
+};
