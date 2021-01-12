@@ -39,5 +39,10 @@ export type FoldIterFn<R extends Row, T> = (
 ) => T;
 
 export interface DataSourceOptions {
-  cacheTimeout: number
+  cacheTimeout: number;
 }
+
+export type Views<V extends object> = {
+  [K in keyof V]: () => V[K] extends () => Table<infer R> ? Table<R>
+    : never;
+};
