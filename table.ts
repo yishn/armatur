@@ -43,7 +43,7 @@ export class Table<R extends Row = any> {
   }
 
   extend<S>(
-    fn: IterFn<R, S | Promise<S | undefined> | undefined>,
+    fn: IterFn<R, S | undefined | Promise<S | undefined>>,
   ): Table<Omit<R, keyof S> & S> {
     return this.map(async (row, index, table) => {
       let extension = await fn(row, index, table);
@@ -112,7 +112,7 @@ export class Table<R extends Row = any> {
   }
 
   map<S extends Row>(
-    fn: IterFn<R, S | Promise<S | undefined> | undefined>,
+    fn: IterFn<R, S | undefined | Promise<S | undefined>>,
   ): Table<S> {
     return new Table(async () =>
       (await Promise.all(

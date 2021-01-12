@@ -1,3 +1,4 @@
+import { CircularDependencyError } from "./errors.ts";
 import { Table } from "./table.ts";
 import { Views } from "./types.ts";
 
@@ -32,13 +33,20 @@ export class Resolver<V extends object> {
   ): Views<V>[K] extends () => Table<infer R> ? Table<R> : never {
     this.dependencies.set(name, new Set());
 
+    let running = new Set<keyof V>([name]);
     let views = {} as Views<V>;
 
     for (let key of Object.keys(this.views) as (keyof V)[]) {
       views[key] = () => {
+        if (running.has(key)) throw new CircularDependencyError();
+
+        running.add(key);
         this.dependencies.get(name)!.add(key);
 
-        return this.views[key].bind(views)();
+        let table = this.views[key].bind(views)();
+        table.data.then(() => running.delete(key));
+
+        return table;
       };
     }
 
