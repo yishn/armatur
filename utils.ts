@@ -1,11 +1,5 @@
 import type { Value } from "./types.ts";
 
-export type TypeEquals<T, U> = Exclude<T, U> extends never
-  ? Exclude<U, T> extends never ? true : false
-  : false;
-
-export function assertTypeEquals<T, U>(_: TypeEquals<T, U>) {}
-
 export function compareValues(value: Value, other: Value): -1 | 0 | 1 {
   if (value instanceof Date) {
     value = value.getTime();

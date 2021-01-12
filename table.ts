@@ -2,33 +2,39 @@ import type { FoldIterFn, IntoTable, IterFn, Row, Value } from "./types.ts";
 import { addValues, compareValues } from "./utils.ts";
 
 export class Table<R extends Row = Row> {
-  readonly data: readonly Readonly<R>[];
+  readonly data: Promise<readonly Readonly<R>[]>;
 
   constructor(data: IntoTable<R>) {
-    if (Array.isArray(data)) {
-      this.data = data;
-    } else if (data instanceof Table) {
+    if (data instanceof Table) {
       this.data = data.data;
+    } else if (data instanceof Promise) {
+      this.data = data.then((data) => data instanceof Table ? data.data : data);
+    } else if (typeof data === "function") {
+      this.data = data().then((data) =>
+        data instanceof Table ? data.data : data
+      );
+    } else if (Array.isArray(data)) {
+      this.data = Promise.resolve(data);
     } else {
-      throw new TypeError("Invalid data type");
+      throw TypeError("Invalid data type");
     }
   }
 
-  get length(): number {
-    return this.data.length;
+  get length(): Promise<number> {
+    return this.data.then((data) => data.length);
   }
 
-  all(fn: IterFn<R, boolean>): boolean {
-    return this.data.every((row, index) => fn(row, index, this));
+  async all(fn: IterFn<R, boolean>): Promise<boolean> {
+    return (await this.data).every((row, index) => fn(row, index, this));
   }
 
-  any(fn: IterFn<R, boolean>): boolean {
-    return this.data.some((row, index) => fn(row, index, this));
+  async any(fn: IterFn<R, boolean>): Promise<boolean> {
+    return (await this.data).some((row, index) => fn(row, index, this));
   }
 
-  averageBy(fn: IterFn<R, number>): number | undefined {
-    let sum = this.sumBy(fn);
-    return sum === undefined ? undefined : sum / this.length;
+  async averageBy(fn: IterFn<R, number>): Promise<number | undefined> {
+    let sum = await this.sumBy(fn);
+    return sum === undefined ? undefined : sum / await this.length;
   }
 
   chain(other: IntoTable<R>): Table<R> {
@@ -36,49 +42,57 @@ export class Table<R extends Row = Row> {
       .flatMap((_, index) => index === 0 ? this : other);
   }
 
-  extend<S>(fn: IterFn<R, S>): Table<Omit<R, keyof S> & S> {
-    return this.map((row, index, table) => ({
-      ...row,
-      ...fn(row, index, table),
-    }));
+  extend<S>(
+    fn: IterFn<R, S | Promise<S | undefined> | undefined>,
+  ): Table<Omit<R, keyof S> & S> {
+    return this.map(async (row, index, table) => {
+      let extension = await fn(row, index, table);
+      if (extension === undefined) return undefined;
+
+      return { ...row, ...extension };
+    });
   }
 
   filter(fn: IterFn<R, boolean>): Table<R> {
-    return new Table(this.data.filter((row, index) => fn(row, index, this)));
-  }
-
-  find(fn: IterFn<R, boolean>): R | undefined {
-    return this.data.find((row, index) => fn(row, index, this));
-  }
-
-  flatMap<S extends Row>(fn: IterFn<R, IntoTable<S>>): Table<S> {
-    if (this.length === 0) return new Table([]);
-
-    return new Table(
-      this.data.map((row, index) => new Table<S>(fn(row, index, this)))
-        .reduce((acc, table) => {
-          acc.push(...table.data);
-          return acc;
-        }, [] as S[]),
+    return new Table(async () =>
+      (await this.data).filter((row, index) => fn(row, index, this))
     );
   }
 
-  fold<T>(init: T, fn: FoldIterFn<R, T>): T {
-    return this.data.reduce(
+  async find(fn: IterFn<R, boolean>): Promise<R | undefined> {
+    return (await this.data).find((row, index) => fn(row, index, this));
+  }
+
+  flatMap<S extends Row>(fn: IterFn<R, IntoTable<S>>): Table<S> {
+    return new Table(async () =>
+      (await this.data).map((row, index) => new Table<S>(fn(row, index, this)))
+        .reduce(
+          (acc, table) =>
+            acc.then(async (acc) => {
+              acc.push(...await table.data);
+              return acc;
+            }),
+          Promise.resolve([] as S[]),
+        )
+    );
+  }
+
+  async fold<T>(init: T, fn: FoldIterFn<R, T>): Promise<T> {
+    return (await this.data).reduce(
       (acc, row, index) => fn(acc, row, index, this),
       init,
     );
   }
 
-  first(): R | undefined {
+  async first(): Promise<R | undefined> {
     return this.nth(0);
   }
 
-  groupBy(fn: IterFn<R, Value>): Table<R>[] {
+  async groupBy(fn: IterFn<R, Value>): Promise<Table<R>[]> {
     let valueIndexMap = {} as Partial<Record<string, number>>;
     let result = [] as R[][];
 
-    this.data.forEach((row, index) => {
+    (await this.data).forEach((row, index) => {
       let key = JSON.stringify(fn(row, index, this));
 
       if (valueIndexMap[key] == null) {
@@ -92,20 +106,22 @@ export class Table<R extends Row = Row> {
     return result.map((data) => new Table(data));
   }
 
-  last(): R | undefined {
+  async last(): Promise<R | undefined> {
     return this.nth(-1);
   }
 
-  map<S extends Row>(fn: IterFn<R, S | undefined>): Table<S> {
-    return new Table(
-      this.data
-        .map((row, index) => fn(row, index, this))
-        .filter((row): row is S => row !== undefined),
+  map<S extends Row>(
+    fn: IterFn<R, S | Promise<S | undefined> | undefined>,
+  ): Table<S> {
+    return new Table(async () =>
+      (await Promise.all(
+        (await this.data).map((row, index) => fn(row, index, this)),
+      )).filter((row): row is S => row !== undefined)
     );
   }
 
-  maxBy(fn: IterFn<R, Value>): R | undefined {
-    return this.fold(
+  async maxBy(fn: IterFn<R, Value>): Promise<R | undefined> {
+    return (await this.fold(
       undefined as readonly [R, number] | undefined,
       (acc, row, index, table) => {
         let value = fn(row, index, table);
@@ -114,11 +130,11 @@ export class Table<R extends Row = Row> {
           ? [row, index] as const
           : acc;
       },
-    )?.[0];
+    ))?.[0];
   }
 
-  minBy(fn: IterFn<R, Value>): R | undefined {
-    return this.fold(
+  async minBy(fn: IterFn<R, Value>): Promise<R | undefined> {
+    return (await this.fold(
       undefined as readonly [R, number] | undefined,
       (acc, row, index, table) => {
         let value = fn(row, index, table);
@@ -127,15 +143,16 @@ export class Table<R extends Row = Row> {
           ? [row, index] as const
           : acc;
       },
-    )?.[0];
+    ))?.[0];
   }
 
-  nth(n: number): R | undefined {
+  async nth(n: number): Promise<R | undefined> {
     if (n < 0) {
-      n = (n % this.length + this.length) % this.length;
+      let length = await this.length;
+      n = (n % length + length) % length;
     }
 
-    return this.data[n];
+    return (await this.data)[n];
   }
 
   omit<K extends string>(...keys: K[]): Table<Omit<R, K>> {
@@ -150,7 +167,9 @@ export class Table<R extends Row = Row> {
     });
   }
 
-  pick<K extends string>(...keys: K[]): Table<Pick<R, Extract<K, keyof R>>> {
+  pick<K extends string>(
+    ...keys: K[]
+  ): Table<Pick<R, Extract<K, keyof R>>> {
     return this.map((row) => {
       let result = {} as Partial<R>;
 
@@ -162,15 +181,17 @@ export class Table<R extends Row = Row> {
     });
   }
 
-  position(fn: IterFn<R, boolean>): number | undefined {
-    let result = this.data.findIndex((row, index) => fn(row, index, this));
+  async position(fn: IterFn<R, boolean>): Promise<number | undefined> {
+    let result = (await this.data).findIndex((row, index) =>
+      fn(row, index, this)
+    );
 
     return result < 0 ? undefined : result;
   }
 
   sortBy(fn: IterFn<R, Value>): Table<R> {
-    return new Table(
-      this.data.slice()
+    return new Table(async () =>
+      (await this.data).slice()
         .map((row, index) =>
           [row, index, undefined] as [Readonly<R>, number, Value | undefined]
         )
@@ -184,22 +205,26 @@ export class Table<R extends Row = Row> {
 
           return compareValues(entry[2], other[2]);
         })
-        .map(([row]) => row),
+        .map(([row]) => row)
     );
   }
 
   skip(n: number): Table<R> {
-    return new Table(this.data.slice(n));
+    return new Table(async () => (await this.data).slice(n));
   }
 
   skipWhile(fn: IterFn<R, boolean>): Table<R> {
-    let index = this.position((row, index, table) => !fn(row, index, table));
-    if (index === undefined) return new Table([]);
+    return new Table(async () => {
+      let index = await this.position((row, index, table) =>
+        !fn(row, index, table)
+      );
+      if (index === undefined) return new Table([]);
 
-    return this.skip(index);
+      return this.skip(index);
+    });
   }
 
-  sumBy(fn: IterFn<R, number>): number | undefined {
+  async sumBy(fn: IterFn<R, number>): Promise<number | undefined> {
     return this.fold(
       undefined as number | undefined,
       (acc, row, index, table) => {
@@ -210,13 +235,17 @@ export class Table<R extends Row = Row> {
   }
 
   take(n: number): Table<R> {
-    return new Table(this.data.slice(0, n));
+    return new Table(async () => (await this.data).slice(0, n));
   }
 
   takeWhile(fn: IterFn<R, boolean>): Table<R> {
-    let index = this.position((row, index, table) => !fn(row, index, table));
-    if (index === undefined) return this;
+    return new Table(async () => {
+      let index = await this.position((row, index, table) =>
+        !fn(row, index, table)
+      );
+      if (index === undefined) return this;
 
-    return this.take(index);
+      return this.take(index);
+    });
   }
 }
