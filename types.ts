@@ -3,7 +3,17 @@ import type { DataSource } from "./data_source.ts";
 
 export type Value = string | boolean | number | Date | null;
 
+export type ValueJson<V extends Value> = V extends Date ? {
+  type: "date";
+  value: string;
+}
+  : V;
+
 export type Row = Record<string, Value>;
+
+export type RowJson<R extends Row> = {
+  [K in keyof R]: ValueJson<R[K]>;
+};
 
 export type IntoTable<R extends Row> =
   | Table<R>

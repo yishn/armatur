@@ -1,4 +1,4 @@
-import type { Value } from "./types.ts";
+import type { Row, RowJson, Value, ValueJson } from "./types.ts";
 
 export function compareValues(value: Value, other: Value): -1 | 0 | 1 {
   if (value instanceof Date) {
@@ -33,4 +33,47 @@ export function addValues(value: Value, other: Value): number {
   }
 
   return value + other;
+}
+
+export function rowToJson<R extends Row>(row: R): RowJson<R> {
+  function valueToJson<V extends Value>(value: V): ValueJson<V> {
+    if (value instanceof Date) {
+      return {
+        type: "date",
+        value: value.toJSON(),
+      } as ValueJson<V>;
+    }
+
+    return value as ValueJson<V>;
+  }
+
+  let result = {} as Partial<RowJson<R>>;
+
+  for (let key of Object.keys(row).sort() as (keyof R)[]) {
+    result[key] = valueToJson(row[key]);
+  }
+
+  return result as RowJson<R>;
+}
+
+export function jsonToRow<R extends Row>(rowJson: RowJson<R>): R {
+  function jsonToValue<V extends Value>(valueJson: ValueJson<V>): V {
+    if (
+      typeof valueJson === "object" &&
+      "type" in valueJson &&
+      valueJson.type === "date"
+    ) {
+      return new Date(valueJson.value) as V;
+    }
+
+    return valueJson as V;
+  }
+
+  let result = {} as Partial<R>;
+
+  for (let key in rowJson) {
+    result[key] = jsonToValue(rowJson[key]);
+  }
+
+  return result as R;
 }

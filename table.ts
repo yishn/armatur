@@ -1,7 +1,7 @@
 import type { FoldIterFn, IntoTable, IterFn, Row, Value } from "./types.ts";
 import { addValues, compareValues } from "./utils.ts";
 
-export class Table<R extends Row = Row> {
+export class Table<R extends Row = any> {
   readonly data: Promise<readonly Readonly<R>[]>;
 
   constructor(data: IntoTable<R>) {
@@ -65,7 +65,8 @@ export class Table<R extends Row = Row> {
 
   flatMap<S extends Row>(fn: IterFn<R, IntoTable<S>>): Table<S> {
     return new Table(async () =>
-      (await this.data).map((row, index) => new Table<S>(fn(row, index, this)))
+      (await this.data)
+        .map((row, index) => new Table<S>(fn(row, index, this)))
         .reduce(
           (acc, table) =>
             acc.then(async (acc) => {

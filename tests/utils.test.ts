@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.83.0/testing/asserts.ts";
-import { addValues, compareValues } from "../utils.ts";
+import { addValues, compareValues, jsonToRow, rowToJson } from "../utils.ts";
 
 Deno.test("compareValues", () => {
   assertEquals(compareValues(4, 5), -1);
@@ -21,4 +21,33 @@ Deno.test("addValues", () => {
   assertEquals(addValues(new Date(2020, 1, 1), new Date(2019, 1, 1)), NaN);
   assertEquals(addValues("sdf", 3), NaN);
   assertEquals(addValues("sdf", "dslfk"), NaN);
+});
+
+Deno.test("rowToJson and jsonToRow", () => {
+  let row = {
+    hello: "world",
+    date: new Date(2021, 1, 12),
+    age: 5,
+  };
+
+  let anotherRow = {
+    hello: "world",
+    age: 5,
+    date: new Date(2021, 1, 12),
+  };
+
+  assertEquals(rowToJson(row), {
+    hello: "world",
+    date: {
+      type: "date",
+      value: "2021-02-11T23:00:00.000Z",
+    },
+    age: 5,
+  });
+  assertEquals(
+    JSON.stringify(rowToJson(row)),
+    JSON.stringify(rowToJson(anotherRow)),
+    "property order should not matter",
+  );
+  assertEquals(jsonToRow(rowToJson(row)), row);
 });
