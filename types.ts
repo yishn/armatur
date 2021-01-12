@@ -38,11 +38,6 @@ export type FoldIterFn<R extends Row, T> = (
   table: Table<R>,
 ) => T;
 
-export interface DataSourceConfig<D extends DataSource> {
-  dataSource: D;
-  params: D extends DataSource<infer P, infer _> ? P : never;
+export interface DataSourceOptions {
+  cacheTimeout: number
 }
-
-export type DataSourcesConfig<D extends Record<string, DataSource>> = {
-  [K in keyof D]: DataSourceConfig<D[K]>;
-};
