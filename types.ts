@@ -1,5 +1,4 @@
 import type { Table } from "./table.ts";
-import type { DataSource } from "./data_source.ts";
 
 export type Value = string | boolean | number | Date | null;
 
@@ -21,10 +20,6 @@ export type IntoTable<R extends Row> =
   | Promise<Table<R> | readonly R[]>
   | (() => Promise<Table<R> | readonly R[]>);
 
-export type IntoDataSource<P extends Row, R extends Row> =
-  | DataSource<P, R>
-  | ((params: P) => IntoTable<R>);
-
 export type IterFn<R extends Row, T> = (
   row: Readonly<R>,
   index: number,
@@ -37,10 +32,6 @@ export type FoldIterFn<R extends Row, T> = (
   index: number,
   table: Table<R>,
 ) => T;
-
-export interface DataSourceOptions {
-  cacheTimeout: number;
-}
 
 export type Views<V extends object> = {
   [K in keyof V]: () => V[K] extends () => Table<infer R> ? Table<R>
