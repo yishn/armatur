@@ -1,5 +1,5 @@
 import type { FoldIterFn, IntoTable, IterFn, Row, Value } from "./types.ts";
-import { addValues, compareValues, jsonToRow, rowToJson } from "./utils.ts";
+import { addValues, compareLexicographically, compareValues, jsonToRow, rowToJson } from "./utils.ts";
 
 export class Table<R extends Row = any> {
   readonly data: Promise<readonly Readonly<R>[]>;
@@ -156,7 +156,7 @@ export class Table<R extends Row = any> {
     return (await this.data)[n];
   }
 
-  omit<K extends string>(...keys: K[]): Table<Omit<R, K>> {
+  omit<K extends keyof R>(...keys: K[]): Table<Omit<R, K>> {
     return this.map((row) => {
       let result = { ...row } as Partial<R>;
 
@@ -168,7 +168,7 @@ export class Table<R extends Row = any> {
     });
   }
 
-  pick<K extends string>(
+  pick<K extends keyof R>(
     ...keys: K[]
   ): Table<Pick<R, Extract<K, keyof R>>> {
     return this.map((row) => {
@@ -190,11 +190,11 @@ export class Table<R extends Row = any> {
     return result < 0 ? undefined : result;
   }
 
-  sortBy(fn: IterFn<R, Value>): Table<R> {
+  sortBy(fn: IterFn<R, Value | Value[]>): Table<R> {
     return new Table(async () =>
       (await this.data).slice()
         .map((row, index) =>
-          [row, index, undefined] as [Readonly<R>, number, Value | undefined]
+          [row, index, undefined] as [Readonly<R>, number, Value | Value[] | undefined]
         )
         .sort((entry, other) => {
           if (entry[2] === undefined) {
@@ -203,8 +203,14 @@ export class Table<R extends Row = any> {
           if (other[2] === undefined) {
             other[2] = fn(other[0], other[1], this);
           }
+          if (!Array.isArray(entry[2])) {
+            entry[2] = [entry[2]]
+          }
+          if (!Array.isArray(other[2])) {
+            other[2] = [other[2]]
+          }
 
-          return compareValues(entry[2], other[2]);
+          return compareLexicographically(entry[2], other[2]);
         })
         .map(([row]) => row)
     );

@@ -27,6 +27,23 @@ export function compareValues(value: Value, other: Value): -1 | 0 | 1 {
   return value < other ? -1 : 1;
 }
 
+export function compareLexicographically(
+  values: Value[],
+  others: Value[],
+): -1 | 0 | 1 {
+  if (values.length !== others.length) {
+    return Math.sign(values.length - others.length) as -1 | 1;
+  } else if (values.length === 0) {
+    return 0;
+  }
+
+  let compareFirst = compareValues(values[0], others[0]);
+
+  return compareFirst !== 0
+    ? compareFirst
+    : compareLexicographically(values.slice(1), others.slice(1));
+}
+
 export function addValues(value: Value, other: Value): number {
   if (typeof value !== "number" || typeof other !== "number") {
     return NaN;
