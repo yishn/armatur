@@ -1,5 +1,11 @@
 import type { FoldIterFn, IntoTable, IterFn, Row, Value } from "./types.ts";
-import { addValues, compareLexicographically, compareValues, jsonToRow, rowToJson } from "./utils.ts";
+import {
+  addValues,
+  compareLexicographically,
+  compareValues,
+  jsonToRow,
+  rowToJson,
+} from "./utils.ts";
 
 export class Table<R extends Row = any> {
   readonly data: Promise<readonly Readonly<R>[]>;
@@ -190,11 +196,19 @@ export class Table<R extends Row = any> {
     return result < 0 ? undefined : result;
   }
 
+  reverse(): Table<R> {
+    return new Table(async () => (await this.data).slice().reverse());
+  }
+
   sortBy(fn: IterFn<R, Value | Value[]>): Table<R> {
     return new Table(async () =>
       (await this.data).slice()
         .map((row, index) =>
-          [row, index, undefined] as [Readonly<R>, number, Value | Value[] | undefined]
+          [row, index, undefined] as [
+            Readonly<R>,
+            number,
+            Value | Value[] | undefined,
+          ]
         )
         .sort((entry, other) => {
           if (entry[2] === undefined) {
@@ -204,10 +218,10 @@ export class Table<R extends Row = any> {
             other[2] = fn(other[0], other[1], this);
           }
           if (!Array.isArray(entry[2])) {
-            entry[2] = [entry[2]]
+            entry[2] = [entry[2]];
           }
           if (!Array.isArray(other[2])) {
-            other[2] = [other[2]]
+            other[2] = [other[2]];
           }
 
           return compareLexicographically(entry[2], other[2]);
