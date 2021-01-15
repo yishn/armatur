@@ -126,11 +126,16 @@ Deno.test("Table#(omit|pick)", async () => {
   assertEquals(Object.keys((await omitted.nth(0))!), ["a", "b"]);
 });
 
-Deno.test("Table#sortBy", async () => {
+Deno.test("Table#(sortBy|reverse)", async () => {
   let sorted = table.chain([6, 5, 4].map((val) => ({ val })))
-    .sortBy((row) => row.val);
+    .sortBy((row) => [row.val, 1]);
+  let reversed = sorted.reverse();
 
   assertEquals(await sorted.data, [1, 2, 3, 4, 5, 6].map((val) => ({ val })));
+  assertEquals(
+    await reversed.data,
+    [1, 2, 3, 4, 5, 6].map((val) => ({ val })).reverse(),
+  );
 });
 
 Deno.test("Table#(skip|skipWhile|take|takeWhile)", async () => {
@@ -155,7 +160,7 @@ Deno.test("Table#(skip|skipWhile|take|takeWhile)", async () => {
 
 Deno.test("Table#unique", async () => {
   let duplicates = table.flatMap(() => table);
-  let unique = duplicates.unique()
+  let unique = duplicates.unique();
 
   assertEquals(await duplicates.length, 9);
   assertEquals(await unique.length, 3);

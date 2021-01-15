@@ -114,7 +114,7 @@ export class Table<R extends Row = any> {
   }
 
   async last(): Promise<R | undefined> {
-    return this.nth(-1);
+    return this.nth(await this.length - 1);
   }
 
   map<S extends Row>(
@@ -154,11 +154,6 @@ export class Table<R extends Row = any> {
   }
 
   async nth(n: number): Promise<R | undefined> {
-    if (n < 0) {
-      let length = await this.length;
-      n = (n % length + length) % length;
-    }
-
     return (await this.data)[n];
   }
 
