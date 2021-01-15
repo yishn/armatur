@@ -1,4 +1,11 @@
-import type { FoldIterFn, IntoTable, IterFn, Row, Value } from "./types.ts";
+import type {
+  FoldIterFn,
+  IntoTable,
+  IterFn,
+  Row,
+  RowJson,
+  Value,
+} from "./types.ts";
 import {
   addValues,
   compareLexicographically,
@@ -11,19 +18,27 @@ export class Table<R extends Row = any> {
   readonly data: Promise<readonly Readonly<R>[]>;
 
   constructor(data: IntoTable<R>) {
+    if (typeof data === "function") {
+      data = data();
+    }
+
     if (data instanceof Table) {
       this.data = data.data;
     } else if (data instanceof Promise) {
       this.data = data.then((data) => data instanceof Table ? data.data : data);
-    } else if (typeof data === "function") {
-      this.data = data().then((data) =>
-        data instanceof Table ? data.data : data
-      );
     } else if (Array.isArray(data)) {
       this.data = Promise.resolve(data);
     } else {
       throw TypeError("Invalid data type");
     }
+  }
+
+  static fromJSON<R extends Row>(json: RowJson<R>[]): Table<R> {
+    return new Table(json.map((row) => jsonToRow(row)));
+  }
+
+  async toJSON(): Promise<RowJson<R>[]> {
+    return (await this.data).map((row) => rowToJson(row));
   }
 
   get length(): Promise<number> {
