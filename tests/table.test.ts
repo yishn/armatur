@@ -152,3 +152,11 @@ Deno.test("Table#(skip|skipWhile|take|takeWhile)", async () => {
   assertEquals(await table.takeWhile((row) => row.val > 0).length, 3);
   assertEquals(await table.takeWhile((row) => row.val > 3).length, 0);
 });
+
+Deno.test("Table#unique", async () => {
+  let duplicates = table.flatMap(() => table);
+  let unique = duplicates.unique()
+
+  assertEquals(await duplicates.length, 9);
+  assertEquals(await unique.length, 3);
+});

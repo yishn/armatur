@@ -1,5 +1,5 @@
 import type { FoldIterFn, IntoTable, IterFn, Row, Value } from "./types.ts";
-import { addValues, compareValues } from "./utils.ts";
+import { addValues, compareValues, jsonToRow, rowToJson } from "./utils.ts";
 
 export class Table<R extends Row = any> {
   readonly data: Promise<readonly Readonly<R>[]>;
@@ -248,5 +248,16 @@ export class Table<R extends Row = any> {
 
       return this.take(index);
     });
+  }
+
+  unique(): Table<R> {
+    return new Table(async () =>
+      [
+        ...new Set(
+          (await this.data).map((row) => JSON.stringify(rowToJson(row))),
+        ),
+      ]
+        .map((json) => jsonToRow(JSON.parse(json)))
+    );
   }
 }

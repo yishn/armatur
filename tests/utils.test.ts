@@ -44,10 +44,12 @@ Deno.test("rowToJson and jsonToRow", () => {
     },
     age: 5,
   });
+
   assertEquals(
     JSON.stringify(rowToJson(row)),
     JSON.stringify(rowToJson(anotherRow)),
     "property order should not matter",
   );
+
   assertEquals(jsonToRow(rowToJson(row)), row);
 });
