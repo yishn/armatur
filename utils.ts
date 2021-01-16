@@ -94,3 +94,12 @@ export function jsonToRow<R extends Row>(rowJson: RowJson<R>): R {
 
   return result as R;
 }
+
+export function objectMap<T extends object, U extends object>(
+  obj: T,
+  fn: <K extends keyof T>(key: K, value: T[K]) => Partial<U>,
+): U {
+  return Object.entries(obj)
+    .map(([key, value]) => fn(key as keyof T, value))
+    .reduce((acc, part) => ({ ...acc, ...part }), {} as Partial<U>) as U;
+}
