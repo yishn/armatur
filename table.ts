@@ -22,15 +22,23 @@ export class Table<R extends Row = any> {
       data = data();
     }
 
-    if (data instanceof Table) {
+    if (data instanceof Promise) {
+      this.data = data.then((data) => new Table(data).data);
+    } else if (data instanceof Table) {
       this.data = data.data;
-    } else if (data instanceof Promise) {
-      this.data = data.then((data) => data instanceof Table ? data.data : data);
     } else if (Array.isArray(data)) {
       this.data = Promise.resolve(data);
     } else {
       throw TypeError("Invalid data type");
     }
+  }
+
+  static empty(length: number): Table<{}> {
+    return new Table([...Array(length)].map(() => ({})));
+  }
+
+  static chain<R extends Row>(...others: Table<R>[]): Table<R> {
+    return Table.empty(others.length).flatMap((_, i) => others[i]);
   }
 
   static fromJSON<R extends Row>(json: RowJson<R>[]): Table<R> {
