@@ -38,7 +38,7 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     return new Table([...Array(length)].map(() => ({})));
   }
 
-  static chain<R extends Row>(...others: Table<R>[]): Table<R> {
+  static chain<R extends Row>(...others: IntoTable<R>[]): Table<R> {
     return Table.empty(others.length).flatMap((_, i) => others[i]);
   }
 
@@ -150,6 +150,16 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     });
 
     return result.map((data) => new Table(data));
+  }
+
+  inspect(fn: IterFn<R, unknown>): Table<R> {
+    return new Table(async () => {
+      await Promise.all(
+        (await this.data).map((row, index) => fn(row, index, this)),
+      );
+
+      return this;
+    });
   }
 
   async last(): Promise<R | undefined> {
