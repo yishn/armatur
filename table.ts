@@ -1,5 +1,5 @@
 import type {
-  AccumulateIterFn,
+  CollectIterFn,
   FoldIterFn,
   IntoTable,
   IterFn,
@@ -58,17 +58,6 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     return this.data.then((data) => data.length);
   }
 
-  accumulate<S extends Row>(
-    fn: AccumulateIterFn<R, S>,
-  ): Table<S> {
-    return new Table(async () =>
-      this.fold(new Table<S>([]), async (acc, row, index, table) => {
-        let transformedRow = await fn(acc, row, index, table);
-        return transformedRow === undefined ? acc : acc.chain([transformedRow]);
-      })
-    );
-  }
-
   async all(fn: IterFn<R, boolean>): Promise<boolean> {
     return (await this.data).every((row, index) => fn(row, index, this));
   }
@@ -83,8 +72,18 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
   }
 
   chain(other: IntoTable<R>): Table<R> {
-    return new Table([{}, {}])
-      .flatMap((_, index) => index === 0 ? this : other);
+    return Table.chain(this, other);
+  }
+
+  collect<S extends Row>(
+    fn: CollectIterFn<R, S>,
+  ): Table<S> {
+    return new Table(
+      this.fold(new Table<S>([]), async (acc, row, index, table) => {
+        let transformedRow = await fn(acc, row, index, table);
+        return transformedRow === undefined ? acc : acc.chain([transformedRow]);
+      }),
+    );
   }
 
   extend<S>(

@@ -33,7 +33,7 @@ export type FoldIterFn<R extends Row, T> = (
   table: Table<R>,
 ) => T | Promise<T>;
 
-export type AccumulateIterFn<R extends Row, S extends Row> = (
+export type CollectIterFn<R extends Row, S extends Row> = (
   acc: Table<S>,
   row: Readonly<R>,
   index: number,
