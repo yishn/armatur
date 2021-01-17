@@ -1,4 +1,5 @@
 import type {
+  AccumulateIterFn,
   FoldIterFn,
   IntoTable,
   IterFn,
@@ -14,7 +15,7 @@ import {
   rowToJson,
 } from "./utils.ts";
 
-export class Table<R extends Row = any> {
+export class Table<R extends Row = any> implements AsyncIterable<R> {
   readonly data: Promise<readonly Readonly<R>[]>;
 
   constructor(data: IntoTable<R>) {
@@ -49,8 +50,23 @@ export class Table<R extends Row = any> {
     return (await this.data).map((row) => rowToJson(row));
   }
 
+  async *[Symbol.asyncIterator]() {
+    yield* await this.data;
+  }
+
   get length(): Promise<number> {
     return this.data.then((data) => data.length);
+  }
+
+  accumulate<S extends Row>(
+    fn: AccumulateIterFn<R, S>,
+  ): Table<S> {
+    return new Table(async () =>
+      this.fold(new Table<S>([]), async (acc, row, index, table) => {
+        let transformedRow = await fn(acc, row, index, table);
+        return transformedRow === undefined ? acc : acc.chain([transformedRow]);
+      })
+    );
   }
 
   async all(fn: IterFn<R, boolean>): Promise<boolean> {
@@ -109,8 +125,8 @@ export class Table<R extends Row = any> {
 
   async fold<T>(init: T, fn: FoldIterFn<R, T>): Promise<T> {
     return (await this.data).reduce(
-      (acc, row, index) => fn(acc, row, index, this),
-      init,
+      async (acc, row, index) => await fn(await acc, row, index, this),
+      Promise.resolve(init),
     );
   }
 
