@@ -5,7 +5,7 @@ import {
   compareValues,
   jsonToRow,
   rowToJson,
-} from "../utils.ts";
+} from "../src/utils.ts";
 
 Deno.test("compareValues", () => {
   assertEquals(compareValues(4, 5), -1);

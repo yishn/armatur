@@ -3,7 +3,7 @@ import {
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.83.0/testing/asserts.ts";
-import { Table } from "../mod.ts";
+import { Table } from "../src/mod.ts";
 
 let table = new Table(async () => [1, 2, 3].map((val) => ({ val })));
 
