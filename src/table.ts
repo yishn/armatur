@@ -8,7 +8,6 @@ import type {
   Value,
 } from "./types.ts";
 import {
-  addValues,
   compareLexicographically,
   compareValues,
   jsonToRow,
@@ -293,7 +292,7 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
       undefined as number | undefined,
       (acc, row, index, table) => {
         let value = fn(row, index, table);
-        return acc === undefined ? value : addValues(acc, value);
+        return acc === undefined ? value : acc + value;
       },
     );
   }

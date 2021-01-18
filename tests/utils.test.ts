@@ -1,6 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.83.0/testing/asserts.ts";
 import {
-  addValues,
   compareLexicographically,
   compareValues,
   jsonToRow,
@@ -27,14 +26,6 @@ Deno.test("compareLexicographically", () => {
   assertEquals(compareLexicographically([4, 1], [4, 2]), -1);
   assertEquals(compareLexicographically([4, 1], [4, 1, 3]), -1);
   assertEquals(compareLexicographically([], []), 0);
-});
-
-Deno.test("addValues", () => {
-  assertEquals(addValues(2, 3), 2 + 3);
-  assertEquals(addValues(NaN, 3), NaN);
-  assertEquals(addValues(new Date(2020, 1, 1), new Date(2019, 1, 1)), NaN);
-  assertEquals(addValues("sdf", 3), NaN);
-  assertEquals(addValues("sdf", "dslfk"), NaN);
 });
 
 Deno.test("rowToJson and jsonToRow", () => {

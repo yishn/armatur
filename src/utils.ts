@@ -44,14 +44,6 @@ export function compareLexicographically(
     : compareLexicographically(values.slice(1), others.slice(1));
 }
 
-export function addValues(value: Value, other: Value): number {
-  if (typeof value !== "number" || typeof other !== "number") {
-    return NaN;
-  }
-
-  return value + other;
-}
-
 export function rowToJson<R extends Row>(row: R): RowJson<R> {
   function valueToJson<V extends Value>(value: V): ValueJson<V> {
     if (value instanceof Date) {
