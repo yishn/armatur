@@ -132,22 +132,40 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     return this.nth(0);
   }
 
-  async groupBy(fn: IterFn<R, Value>): Promise<Table<R>[]> {
-    let valueIndexMap = {} as Partial<Record<string, number>>;
-    let result = [] as R[][];
+  groupBy(fn: IterFn<R, Value>): Promise<Table<R>[]>;
+  groupBy<S extends Row>(
+    fn: IterFn<R, Value>,
+    map: (table: Table<R>) => IntoTable<S>,
+  ): Table<S>;
+  groupBy<S extends Row>(
+    fn: IterFn<R, Value>,
+    map?: (table: Table<R>) => IntoTable<S>,
+  ): Table<S> | Promise<Table<R>[]> {
+    let tables = (async () => {
+      let valueIndexMap = {} as Partial<Record<string, number>>;
+      let result = [] as R[][];
 
-    (await this.data).forEach((row, index) => {
-      let key = JSON.stringify(fn(row, index, this));
+      (await this.data).forEach((row, index) => {
+        let key = JSON.stringify(fn(row, index, this));
 
-      if (valueIndexMap[key] == null) {
-        valueIndexMap[key] = result.length;
-        result.push([row]);
-      } else {
-        result[valueIndexMap[key]!].push(row);
-      }
-    });
+        if (valueIndexMap[key] == null) {
+          valueIndexMap[key] = result.length;
+          result.push([row]);
+        } else {
+          result[valueIndexMap[key]!].push(row);
+        }
+      });
 
-    return result.map((data) => new Table(data));
+      return result.map((data) => new Table(data));
+    })();
+
+    if (map == null) return tables;
+
+    return new Table(async () =>
+      Table.chain(
+        ...(await tables).map((table) => new Table(map(table))),
+      )
+    );
   }
 
   inspect(fn: IterFn<R, unknown>): Table<R> {
