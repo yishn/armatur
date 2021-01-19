@@ -117,3 +117,7 @@ export function typeOf(value: Value, type: string): boolean {
     value instanceof Date && type === "date" ||
     value == null && type === "null";
 }
+
+export function clamp(x: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, x));
+}
