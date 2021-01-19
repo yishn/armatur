@@ -46,7 +46,7 @@ export function compareLexicographically(
 
 export function rowToJson<R extends Row>(row: R): RowJson<R> {
   function valueToJson<V extends Value>(value: V): ValueJson<V> {
-    if (value instanceof Date) {
+    if (typeOf(value, "date")) {
       return {
         type: "date",
         value: value.toJSON(),
@@ -94,4 +94,26 @@ export function objectMap<T extends object, U extends object>(
   return Object.entries(obj)
     .map(([key, value]) => fn(key as keyof T, value))
     .reduce((acc, part) => ({ ...acc, ...part }), {} as Partial<U>) as U;
+}
+
+export function typeOf(value: Value, type: "string"): value is string;
+export function typeOf(value: Value, type: "boolean"): value is boolean;
+export function typeOf(value: Value, type: "number"): value is number;
+export function typeOf(value: Value, type: "date"): value is Date;
+export function typeOf(value: Value, type: "null"): value is null;
+export function typeOf(
+  value: Value,
+  type:
+    | "string"
+    | "boolean"
+    | "number"
+    | "date"
+    | "null",
+): boolean;
+export function typeOf(value: Value, type: string): boolean {
+  return typeof value === "string" && type === "string" ||
+    typeof value === "boolean" && type === "boolean" ||
+    typeof value === "number" && type === "number" ||
+    value instanceof Date && type === "date" ||
+    value == null && type === "null";
 }
