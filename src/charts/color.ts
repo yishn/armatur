@@ -1,5 +1,5 @@
-import { Value } from "../types.ts";
 import { clamp } from "../utils.ts";
+import type { Value } from "../types.ts";
 import type { IntoRgba } from "./types.ts";
 
 export class Rgba {
