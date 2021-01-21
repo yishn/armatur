@@ -1,8 +1,4 @@
-import {
-  assert,
-  assertEquals,
-  assertThrows,
-} from "https://deno.land/std@0.83.0/testing/asserts.ts";
+import { assert, assertEquals, assertThrows } from "./deps.ts";
 import { Table } from "../src/mod.ts";
 
 let table = new Table(async () => [1, 2, 3].map((val) => ({ val })));
