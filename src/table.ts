@@ -96,9 +96,9 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     });
   }
 
-  filter(fn: IterFn<R, boolean>): Table<R> {
+  filter<S extends R = R>(fn: IterFn<R, boolean>): Table<S> {
     return new Table(async () =>
-      (await this.data).filter((row, index) => fn(row, index, this))
+      (await this.data).filter((row, index): row is S => fn(row, index, this))
     );
   }
 

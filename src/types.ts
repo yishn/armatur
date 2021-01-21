@@ -2,6 +2,8 @@ import type { Table } from "./table.ts";
 
 export type Value = string | boolean | number | Date | null;
 
+export type ContinuousValue = Date | number;
+
 export type ValueJson<V extends Value> = V extends Date ? {
   type: "date";
   value: string;

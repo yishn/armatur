@@ -1,4 +1,10 @@
-import type { Row, RowJson, Value, ValueJson } from "./types.ts";
+import type {
+  ContinuousValue,
+  Row,
+  RowJson,
+  Value,
+  ValueJson,
+} from "./types.ts";
 
 export function compareValues(value: Value, other: Value): -1 | 0 | 1 {
   if (value instanceof Date) {
@@ -125,4 +131,11 @@ export function typeOf(value: Value, type: string): boolean {
 
 export function clamp(x: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, x));
+}
+
+export function continuousValueToNumber(value: ContinuousValue): number {
+  if (typeof value === "number") return value;
+  if (value instanceof Date) return value.getTime();
+
+  throw new TypeError("Invalid data type for value");
 }

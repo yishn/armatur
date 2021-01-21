@@ -1,80 +1,5 @@
-import type { Row, Value } from "../types.ts";
+import type { ContinuousValue, IterFn, Row, Value } from "../types.ts";
 import type { Rgba } from "./color.ts";
-import type { Scale } from "./scale.ts";
-
-export interface ScaleOptions<I> {
-  includeZero?: boolean;
-  range?: I[];
-  rangeInterpolation?: InterpolationFn;
-}
-
-export type SafeOmit<T, K extends keyof T> = Omit<T, K>
-
-export type ContinuousScaleOptions<V extends Value, I> =
-  & SafeOmit<ScaleOptions<I>, "includeZero">
-  & {
-    includeZero?: V extends number | null ? boolean : false;
-  };
-
-export type DiscreteScaleOptions<I> = SafeOmit<
-  ScaleOptions<I>,
-  "includeZero" | "rangeInterpolation"
->;
-
-export type ContinuousScale<
-  R extends Row,
-  V extends Value,
-  I extends Interpolatable,
-> =
-  & Scale<R, V, I>
-  & { type: "continuous" };
-
-export type DiscreteScale<
-  R extends Row,
-  V extends Value,
-  I extends Interpolatable,
-> =
-  & Scale<R, V, I>
-  & { type: "discrete" };
-
-export interface ChartProperties<R extends Row> {
-  x: Scale<R, Value, number>;
-  y: Scale<R, Value, number>;
-  color?: Rgba | Scale<R, Value, Rgba>;
-  size?: number | Scale<R, Value, number>;
-}
-
-export interface ChartOptions<R extends Row> {
-  properties: ChartProperties<R>;
-}
-
-export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
-  stacked?: boolean;
-  keyAxis?: "x" | "y";
-  properties: {
-    x: Scale<R, Value, number>;
-    y: Scale<R, Value, number>;
-    color?: Rgba | DiscreteScale<R, Value, Rgba>;
-  };
-}
-
-export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
-  drawPoints?: boolean;
-  properties: {
-    x: Scale<R, Value, number>;
-    y: Scale<R, Value, number>;
-    color?: Rgba | DiscreteScale<R, Value, Rgba>;
-  };
-}
-
-export interface PointChartOptions<R extends Row> extends ChartOptions<R> {
-  properties: {
-    x: Scale<R, Value, number>;
-    y: Scale<R, Value, number>;
-    color?: Rgba | Scale<R, Value, Rgba>;
-    size?: number | Scale<R, Value, number>;
-  };
-}
 
 export type IntoRgba = string | Rgba;
 
@@ -85,3 +10,72 @@ export type InterpolationFn = (
   start: number,
   end: number,
 ) => number;
+
+export interface DiscreteScaleDescriptor<R extends Row, V extends Value, T> {
+  type: "discrete";
+  field: IterFn<R, V>;
+  range?: T[];
+}
+
+export interface ContinuousScaleDescriptor<
+  R extends Row,
+  V extends ContinuousValue,
+  T extends Interpolatable,
+> {
+  type: "continuous";
+  field: IterFn<R, V>;
+  includeZero?: boolean;
+  range?: T[];
+  rangeInterpolation?: InterpolationFn;
+}
+
+export type ScaleDescriptor<R extends Row, V extends Value, T> =
+  | DiscreteScaleDescriptor<R, V, T>
+  | ContinuousScaleDescriptor<
+    R,
+    V extends ContinuousValue ? V : never,
+    T extends Interpolatable ? T : never
+  >;
+
+export interface Scale<V extends Value, T> {
+  map(value: V, defaultRange: T[]): T | undefined;
+}
+
+export interface ChartProperties<R extends Row> {
+  x: ScaleDescriptor<R, Value, number>;
+  y: ScaleDescriptor<R, Value, number>;
+  color?: Rgba | ScaleDescriptor<R, Value, Rgba>;
+  size?: number | ScaleDescriptor<R, Value, number>;
+}
+
+export interface ChartOptions<R extends Row> {
+  properties: ChartProperties<R>;
+}
+
+export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
+  stacked?: boolean;
+  keyAxis?: "x" | "y";
+  properties: {
+    x: ScaleDescriptor<R, Value, number>;
+    y: ScaleDescriptor<R, Value, number>;
+    color?: Rgba | DiscreteScaleDescriptor<R, Value, Rgba>;
+  };
+}
+
+export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
+  drawPoints?: boolean;
+  properties: {
+    x: ScaleDescriptor<R, Value, number>;
+    y: ScaleDescriptor<R, Value, number>;
+    color?: Rgba | DiscreteScaleDescriptor<R, Value, Rgba>;
+  };
+}
+
+export interface PointChartOptions<R extends Row> extends ChartOptions<R> {
+  properties: {
+    x: ScaleDescriptor<R, Value, number>;
+    y: ScaleDescriptor<R, Value, number>;
+    color?: Rgba | ScaleDescriptor<R, Value, Rgba>;
+    size?: number | ScaleDescriptor<R, Value, number>;
+  };
+}

@@ -1,113 +1,90 @@
 import type {
-  ContinuousScale,
-  ContinuousScaleOptions,
-  DiscreteScale,
-  DiscreteScaleOptions,
+  ContinuousScaleDescriptor,
+  DiscreteScaleDescriptor,
   Interpolatable,
   InterpolationFn,
-  ScaleOptions,
+  Scale,
 } from "./types.ts";
-import type { IterFn, Row, Value } from "../types.ts";
-import { equalValues } from "../utils.ts";
-import { Table } from "../table.ts";
+import type { ContinuousValue, Row, Value } from "../types.ts";
+import type { Table } from "../table.ts";
+import { continuousValueToNumber, equalValues } from "../utils.ts";
 import { piecewiseInterpolation } from "./interpolation.ts";
 
-export class Scale<R extends Row, V extends Value, I extends Interpolatable> {
+export class DiscreteScale<V extends Value, T> implements Scale<V, T> {
+  range?: T[];
+
+  static async fromDescriptor<
+    R extends Row,
+    V extends ContinuousValue,
+    T extends Interpolatable,
+  >(
+    table: Table<R>,
+    descriptor: DiscreteScaleDescriptor<R, V, T>,
+  ): Promise<DiscreteScale<V, T>> {
+    let scale = new DiscreteScale<V, T>(
+      (await table.map((row, index, table) => ({
+        value: descriptor.field(row, index, table),
+      }))
+        .unique()
+        .data)
+        .map((row) => row.value),
+    );
+
+    scale.range = descriptor.range;
+
+    return scale;
+  }
+
+  constructor(public domainValues: V[]) {}
+
+  map(value: V, defaultRange: T[]): T | undefined {
+    if (value == null) return;
+    let index = this.domainValues.findIndex((x) => equalValues(x, value));
+    if (index < 0) return;
+
+    let range = this.range ?? defaultRange;
+    return range[index % range.length];
+  }
+}
+
+export class ContinuousScale<
+  V extends ContinuousValue,
+  T extends Interpolatable,
+> implements Scale<V, T> {
   includeZero?: boolean;
-  range?: I[];
+  range?: T[];
   rangeInterpolation?: InterpolationFn;
 
-  static continuous<
+  static async fromDescriptor<
     R extends Row,
-    V extends Date | null,
-    I extends Interpolatable,
+    V extends ContinuousValue,
+    T extends Interpolatable,
   >(
-    field: IterFn<R, V>,
-    options?: ContinuousScaleOptions<V, I>,
-  ): ContinuousScale<R, V, I>;
-  static continuous<
-    R extends Row,
-    V extends number | null,
-    I extends Interpolatable,
-  >(
-    field: IterFn<R, V>,
-    options?: ContinuousScaleOptions<V, I>,
-  ): ContinuousScale<R, V, I>;
-  static continuous<
-    R extends Row,
-    V extends number | Date | null,
-    I extends Interpolatable,
-  >(
-    field: IterFn<R, V>,
-    options?: ContinuousScaleOptions<V, I>,
-  ): ContinuousScale<R, V, I> {
-    return new Scale("continuous", field, options) as ContinuousScale<R, V, I>;
+    table: Table<R>,
+    descriptor: ContinuousScaleDescriptor<R, V, T>,
+  ): Promise<ContinuousScale<V, T>> {
+    let valueNumbers = table.map((row, index, table) => ({
+      value: continuousValueToNumber(descriptor.field(row, index, table)),
+    }));
+    let domainMin = (await valueNumbers.minBy((row) => row.value))?.value ?? 0;
+    let domainMax = (await valueNumbers.maxBy((row) => row.value))?.value ?? 0;
+    let scale = new ContinuousScale<V, T>(domainMin, domainMax);
+
+    scale.includeZero = descriptor.includeZero;
+    scale.range = descriptor.range;
+    scale.rangeInterpolation = descriptor.rangeInterpolation;
+
+    return scale;
   }
 
-  static discrete<R extends Row, V extends Value, I extends Interpolatable>(
-    field: IterFn<R, V>,
-    options?: DiscreteScaleOptions<I>,
-  ): DiscreteScale<R, V, I> {
-    return new Scale("discrete", field, options) as DiscreteScale<R, V, I>;
-  }
+  constructor(public domainMin: number, public domainMax: number) {}
 
-  private constructor(
-    public type: "continuous" | "discrete",
-    public field: IterFn<R, V>,
-    options: ScaleOptions<I> = {},
-  ) {
-    this.includeZero = options.includeZero;
-    this.range = options.range;
-    this.rangeInterpolation = options.rangeInterpolation;
-  }
-
-  async getScaler(
-    domain: Table<{ value: V }>,
-    defaultRange: I[],
-  ): Promise<(value: V | null) => I | undefined> {
+  map(value: V, defaultRange: T[]): T | undefined {
     let range = this.range ?? defaultRange;
-    if (range.length === 0) range = defaultRange;
+    let min = this.domainMin;
+    let max = this.domainMax;
+    let lambda = (continuousValueToNumber(value) - min) / (max - min);
 
-    let domainMin =
-      (this.type === "continuous"
-        ? (await domain.minBy((row) => row.value))?.value
-        : undefined) as number | Date | undefined;
-    let domainMax =
-      (this.type === "continuous"
-        ? (await domain.maxBy((row) => row.value))?.value
-        : undefined) as number | Date | undefined;
-    let domainMinValue = domainMin instanceof Date
-      ? domainMin.getTime()
-      : domainMin;
-    let domainMaxValue = domainMax instanceof Date
-      ? domainMax.getTime()
-      : domainMax;
-
-    if (domainMinValue != null && domainMaxValue != null && this.includeZero) {
-      if (domainMinValue < 0 && domainMaxValue < 0) domainMaxValue = 0;
-      else if (domainMinValue > 0 && domainMaxValue > 0) domainMinValue = 0;
-    }
-
-    let domainValues = this.type === "discrete"
-      ? (await domain.unique().data).map((row) => row.value)
-      : undefined;
-
-    return (value) => {
-      if (value == null) return;
-
-      if (this.type === "continuous") {
-        let v = value instanceof Date ? value.getTime() : value as number;
-        let lambda = domainMinValue == null || domainMaxValue == null
-          ? 0
-          : (v - domainMinValue) / (domainMaxValue - domainMinValue);
-
-        return piecewiseInterpolation(lambda, range, this.rangeInterpolation);
-      } else if (this.type === "discrete") {
-        let index = domainValues!.findIndex((x) => equalValues(x, value));
-        if (index < 0) return;
-
-        return range[index % range.length];
-      }
-    };
+    return piecewiseInterpolation(lambda, range, this.rangeInterpolation);
   }
 }
