@@ -27,6 +27,11 @@ export function compareValues(value: Value, other: Value): -1 | 0 | 1 {
   return value < other ? -1 : 1;
 }
 
+export function equalValues(value: Value, other: Value): boolean {
+  return JSON.stringify(valueToJson(value)) ===
+    JSON.stringify(valueToJson(other));
+}
+
 export function compareLexicographically(
   values: Value[],
   others: Value[],
@@ -44,18 +49,30 @@ export function compareLexicographically(
     : compareLexicographically(values.slice(1), others.slice(1));
 }
 
-export function rowToJson<R extends Row>(row: R): RowJson<R> {
-  function valueToJson<V extends Value>(value: V): ValueJson<V> {
-    if (typeOf(value, "date")) {
-      return {
-        type: "date",
-        value: value.toJSON(),
-      } as ValueJson<V>;
-    }
-
-    return value as ValueJson<V>;
+export function valueToJson<V extends Value>(value: V): ValueJson<V> {
+  if (typeOf(value, "date")) {
+    return {
+      type: "date",
+      value: value.toJSON(),
+    } as ValueJson<V>;
   }
 
+  return value as ValueJson<V>;
+}
+
+export function jsonToValue<V extends Value>(valueJson: ValueJson<V>): V {
+  if (
+    typeof valueJson === "object" &&
+    "type" in valueJson &&
+    valueJson.type === "date"
+  ) {
+    return new Date(valueJson.value) as V;
+  }
+
+  return valueJson as V;
+}
+
+export function rowToJson<R extends Row>(row: R): RowJson<R> {
   let result = {} as Partial<RowJson<R>>;
 
   for (let key of Object.keys(row).sort() as (keyof R)[]) {
@@ -66,18 +83,6 @@ export function rowToJson<R extends Row>(row: R): RowJson<R> {
 }
 
 export function jsonToRow<R extends Row>(rowJson: RowJson<R>): R {
-  function jsonToValue<V extends Value>(valueJson: ValueJson<V>): V {
-    if (
-      typeof valueJson === "object" &&
-      "type" in valueJson &&
-      valueJson.type === "date"
-    ) {
-      return new Date(valueJson.value) as V;
-    }
-
-    return valueJson as V;
-  }
-
   let result = {} as Partial<R>;
 
   for (let key in rowJson) {

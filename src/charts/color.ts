@@ -91,25 +91,3 @@ export function getDiscreteColor(value: Value): Rgba {
     1,
   );
 }
-
-export function interpolateColor(colors: Rgba[], value: number): Rgba {
-  let n = colors.length;
-
-  if (n === 0) return rgba(0, 0, 0);
-  if (n === 1) return colors[0];
-  if (n === 2) {
-    return rgba(
-      ...colors[0].toArray().map((x, i) =>
-        x + clamp(value, 0, 1) * (colors[1].toArray()[i] - x)
-      ) as [number, number, number, number],
-    );
-  }
-
-  let positions = colors.map((_, i) => i / (n - 1));
-  let i = Math.max(1, positions.findIndex((pos) => pos >= clamp(value, 0, 1)));
-
-  return interpolateColor(
-    colors.slice(i - 1, i + 1),
-    (value - positions[i - 1]) * (n - 1),
-  );
-}
