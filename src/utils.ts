@@ -139,3 +139,13 @@ export function continuousValueToNumber(value: ContinuousValue): number {
 
   throw new TypeError("Invalid data type for value");
 }
+
+export function equidistantPoints(
+  n: number,
+  min: number = 0,
+  max: number = 1,
+): number[] {
+  if (n <= 0) return [];
+  if (n === 1) return [0];
+  return [...Array(n)].map((_, i) => min + i * (max - min) / (n - 1));
+}

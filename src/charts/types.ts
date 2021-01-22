@@ -75,6 +75,7 @@ export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
 
 export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
   drawPoints?: boolean;
+  keyAxis?: "x" | "y";
   properties: {
     x: ScaleDescriptor<R, Value, number>;
     y: ScaleDescriptor<R, Value, number>;

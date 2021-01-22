@@ -1,4 +1,4 @@
-import { clamp } from "../utils.ts";
+import { clamp, equidistantPoints } from "../utils.ts";
 import { Color, rgba } from "./color.ts";
 import type { Interpolatable, InterpolationFn, Rgba } from "./types.ts";
 
@@ -44,7 +44,7 @@ export function piecewiseInterpolation<I extends Interpolatable>(
     return interpolate(lambda, values[0], values[1], interpolation);
   }
 
-  let positions = values.map((_, i) => i / (n - 1));
+  let positions = equidistantPoints(n);
   let i = Math.max(1, positions.findIndex((pos) => pos >= lambda));
 
   return interpolate(
