@@ -1,6 +1,6 @@
 import { clamp } from "../utils.ts";
-import { Rgba, rgba } from "./color.ts";
-import type { Interpolatable, InterpolationFn } from "./types.ts";
+import { Color, rgba } from "./color.ts";
+import type { Interpolatable, InterpolationFn, Rgba } from "./types.ts";
 
 export const linearInterpolation = (
   lambda: number,
@@ -20,11 +20,11 @@ export function interpolate<I extends Interpolatable>(
     return new Date(
       interpolate(lambda, start.getTime(), end.getTime(), interpolation)!,
     ) as I;
-  } else if (start instanceof Rgba && end instanceof Rgba) {
+  } else if (start instanceof Color && end instanceof Color) {
     return rgba(
       ...start.toArray().map((start, i) =>
         interpolate(lambda, start, end.toArray()[i], interpolation)!
-      ) as [number, number, number, number],
+      ) as Rgba,
     ) as I;
   }
 

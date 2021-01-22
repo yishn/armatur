@@ -1,8 +1,8 @@
 import { clamp } from "../utils.ts";
 import type { Value } from "../types.ts";
-import type { IntoRgba } from "./types.ts";
+import type { IntoRgba, Rgba } from "./types.ts";
 
-export class Rgba {
+export class Color {
   constructor(
     public r: number,
     public g: number,
@@ -10,7 +10,7 @@ export class Rgba {
     public a: number = 1,
   ) {}
 
-  toArray(): [r: number, g: number, b: number, a: number] {
+  toArray(): Rgba {
     let { r, g, b, a } = this;
     return [r, g, b, a];
   }
@@ -33,7 +33,7 @@ export class Rgba {
   }
 }
 
-function hexToRgba(color: string): Rgba {
+function hexToRgba(color: string): Color {
   if (color.startsWith("#")) color = color.slice(1);
 
   let [r, g, b, a] = color.match(/\w\w/g)
@@ -43,23 +43,24 @@ function hexToRgba(color: string): Rgba {
   return rgba(r ?? 0, g ?? 0, b ?? 0, a ?? 1);
 }
 
-export function rgba(r: number, g: number, b: number, a?: number): Rgba;
-export function rgba(value: IntoRgba): Rgba;
-export function rgba(...args: any[]): Rgba {
+export function rgba(r: number, g: number, b: number, a?: number): Color;
+export function rgba(value: IntoRgba): Color;
+export function rgba(...args: any[]): Color {
   if (args.length === 1) {
     let value = args[0] as IntoRgba;
 
     if (typeof value === "string") return hexToRgba(value);
-    if (value instanceof Rgba) return value;
+    if (value instanceof Color) return value;
+    if (Array.isArray(value)) return rgba(...value);
 
     throw new TypeError("Invalid input data type");
   } else {
     let [r, g, b, a] = args;
-    return new Rgba(r, g, b, a);
+    return new Color(r, g, b, a);
   }
 }
 
-export function hsva(h: number, s: number, v: number, a: number = 1): Rgba {
+export function hsva(h: number, s: number, v: number, a: number = 1): Color {
   let i = Math.floor(h * 6);
   let f = h * 6 - i;
   let p = v * (1 - s);
@@ -78,7 +79,7 @@ export function hsva(h: number, s: number, v: number, a: number = 1): Rgba {
   return rgba(r, g, b, a);
 }
 
-export function getDiscreteColor(value: Value): Rgba {
+export function getDiscreteColor(value: Value): Color {
   let key = JSON.stringify(value);
   let hash = [...key].map((_, i) => key.charCodeAt(i));
   let mod1 = (x: number) => x - Math.floor(x);

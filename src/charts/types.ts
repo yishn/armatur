@@ -1,9 +1,17 @@
-import type { ContinuousValue, IterFn, Row, Value } from "../types.ts";
-import type { Rgba } from "./color.ts";
+import type {
+  ContinuousValue,
+  IterFn,
+  Row,
+  Value,
+  ValueJson,
+} from "../types.ts";
+import type { Color } from "./color.ts";
 
-export type IntoRgba = string | Rgba;
+export type IntoRgba = string | Color | Rgba;
 
-export type Interpolatable = number | Date | Rgba;
+export type Rgba = [r: number, g: number, b: number, a: number];
+
+export type Interpolatable = number | Date | Color;
 
 export type InterpolationFn = (
   lambda: number,
@@ -11,22 +19,29 @@ export type InterpolationFn = (
   end: number,
 ) => number;
 
-export interface DiscreteScaleDescriptor<R extends Row, V extends Value, T> {
+export interface DiscreteScaleOptions<T> {
+  range?: T[];
+}
+
+export interface ContinuousScaleOptions<T extends Interpolatable> {
+  includeZero?: boolean;
+  range?: T[];
+  rangeInterpolation?: InterpolationFn;
+}
+
+export interface DiscreteScaleDescriptor<R extends Row, V extends Value, T>
+  extends DiscreteScaleOptions<T> {
   type: "discrete";
   field: IterFn<R, V>;
-  range?: T[];
 }
 
 export interface ContinuousScaleDescriptor<
   R extends Row,
   V extends ContinuousValue,
   T extends Interpolatable,
-> {
+> extends ContinuousScaleOptions<T> {
   type: "continuous";
   field: IterFn<R, V>;
-  includeZero?: boolean;
-  range?: T[];
-  rangeInterpolation?: InterpolationFn;
 }
 
 export type ScaleDescriptor<R extends Row, V extends Value, T> =
@@ -37,14 +52,10 @@ export type ScaleDescriptor<R extends Row, V extends Value, T> =
     T extends Interpolatable ? T : never
   >;
 
-export interface Scale<V extends Value, T> {
-  map(value: V, defaultRange: T[]): T | undefined;
-}
-
 export interface ChartProperties<R extends Row> {
   x: ScaleDescriptor<R, Value, number>;
   y: ScaleDescriptor<R, Value, number>;
-  color?: Rgba | ScaleDescriptor<R, Value, Rgba>;
+  color?: Color | ScaleDescriptor<R, Value, Color>;
   size?: number | ScaleDescriptor<R, Value, number>;
 }
 
@@ -58,7 +69,7 @@ export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
   properties: {
     x: ScaleDescriptor<R, Value, number>;
     y: ScaleDescriptor<R, Value, number>;
-    color?: Rgba | DiscreteScaleDescriptor<R, Value, Rgba>;
+    color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
   };
 }
 
@@ -67,7 +78,7 @@ export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
   properties: {
     x: ScaleDescriptor<R, Value, number>;
     y: ScaleDescriptor<R, Value, number>;
-    color?: Rgba | DiscreteScaleDescriptor<R, Value, Rgba>;
+    color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
   };
 }
 
@@ -75,7 +86,7 @@ export interface PointChartOptions<R extends Row> extends ChartOptions<R> {
   properties: {
     x: ScaleDescriptor<R, Value, number>;
     y: ScaleDescriptor<R, Value, number>;
-    color?: Rgba | ScaleDescriptor<R, Value, Rgba>;
+    color?: Color | ScaleDescriptor<R, Value, Color>;
     size?: number | ScaleDescriptor<R, Value, number>;
   };
 }
