@@ -80,9 +80,12 @@ export class ContinuousScale<
     table: Table<R>,
     descriptor: ContinuousScaleDescriptor<R, V, T>,
   ): Promise<ContinuousScale<V, T>> {
-    let valueNumbers = table.map((row, index, table) => ({
-      value: continuousValueToNumber(descriptor.field(row, index, table)),
-    }));
+    let valueNumbers = table
+      .map((row, index, table) => ({
+        value: continuousValueToNumber(descriptor.field(row, index, table)),
+      }))
+      .filter((row) => !isNaN(row.value) && isFinite(row.value));
+
     let domainMin = (await valueNumbers.minBy((row) => row.value))?.value ?? 0;
     let domainMax = (await valueNumbers.maxBy((row) => row.value))?.value ?? 0;
 
