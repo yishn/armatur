@@ -1,25 +1,45 @@
 import type { Row, Value } from "../types.ts";
-import type { DiscreteScaleDescriptor, LineChartOptions } from "./types.ts";
-import { Table } from "../table.ts";
+import type {
+  ChartOptions,
+  DiscreteScaleDescriptor,
+  ScaleDescriptor,
+} from "./types.ts";
+import type { Table } from "../table.ts";
+import { Chart } from "./chart.ts";
 import { Color, getDiscreteColor, rgba } from "./color.ts";
 import { DiscreteScale, Scale } from "./scale.ts";
-import { equidistantPoints } from "../utils.ts";
+import { equisizedSectionMiddlepoints } from "../utils.ts";
 
-export class LineChart<R extends Row> extends Table<{
+export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
+  drawPoints?: boolean;
+  keyAxis?: "x" | "y";
+  properties: {
+    x: ScaleDescriptor<R, Value, number>;
+    y: ScaleDescriptor<R, Value, number>;
+    color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
+  };
+}
+
+export type LineChartRow = {
   x: number;
   y: number;
   color: string;
-}> {
-  constructor(table: Table<R>, public options: LineChartOptions<R>) {
+};
+
+export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
+  constructor(
+    public readonly source: Table<R>,
+    public readonly options: LineChartOptions<R>,
+  ) {
     super(async () => {
       let { properties: props } = options;
 
-      let xScale = await Scale.fromDomain(table, props.x);
-      let yScale = await Scale.fromDomain(table, props.y);
+      let xScale = await Scale.fromDomain(source, props.x);
+      let yScale = await Scale.fromDomain(source, props.y);
       let colorScale = props.color instanceof Color || props.color == null
         ? props.color ?? rgba(0, 0, 0)
         : await DiscreteScale.fromDomain(
-          table,
+          source,
           props.color,
         );
       let colorField = colorScale instanceof Color
@@ -27,10 +47,10 @@ export class LineChart<R extends Row> extends Table<{
         : (props.color as DiscreteScaleDescriptor<R, Value, Color>).field;
 
       let defaultXRange = xScale instanceof DiscreteScale
-        ? equidistantPoints(xScale.domainValues.length + 1)
+        ? equisizedSectionMiddlepoints(xScale.domainValues.length)
         : [0, 1];
       let defaultYRange = yScale instanceof DiscreteScale
-        ? equidistantPoints(yScale.domainValues.length + 1)
+        ? equisizedSectionMiddlepoints(yScale.domainValues.length + 1)
         : [0, 1];
       let defaultColorRange = colorScale instanceof Color
         ? []
@@ -40,10 +60,10 @@ export class LineChart<R extends Row> extends Table<{
             : getDiscreteColor(value)
         );
 
-      return table
+      return source
         .sortBy((row, i) => [
-          colorField(row, i, table),
-          props[options.keyAxis ?? "x"].field(row, i, table),
+          colorField(row, i, source),
+          props[options.keyAxis ?? "x"].field(row, i, source),
         ])
         .map((row, i, table) => {
           let x = xScale.map(props.x.field(row, i, table), defaultXRange);

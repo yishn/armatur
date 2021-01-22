@@ -3,7 +3,6 @@ import type {
   IterFn,
   Row,
   Value,
-  ValueJson,
 } from "../types.ts";
 import type { Color } from "./color.ts";
 
@@ -65,16 +64,6 @@ export interface ChartOptions<R extends Row> {
 
 export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
   stacked?: boolean;
-  keyAxis?: "x" | "y";
-  properties: {
-    x: ScaleDescriptor<R, Value, number>;
-    y: ScaleDescriptor<R, Value, number>;
-    color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
-  };
-}
-
-export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
-  drawPoints?: boolean;
   keyAxis?: "x" | "y";
   properties: {
     x: ScaleDescriptor<R, Value, number>;

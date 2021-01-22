@@ -18,13 +18,13 @@ export interface Scale<V extends Value, T> {
 
 export namespace Scale {
   export async function fromDomain<R extends Row, V extends Value, T>(
-    table: Table<R>,
+    source: Table<R>,
     descriptor: ScaleDescriptor<R, V, T>,
   ): Promise<Scale<V, T>> {
     if (descriptor.type === "discrete") {
-      return DiscreteScale.fromDomain(table, descriptor);
+      return DiscreteScale.fromDomain(source, descriptor);
     } else if (descriptor.type === "continuous") {
-      return ContinuousScale.fromDomain(table, descriptor);
+      return ContinuousScale.fromDomain(source, descriptor);
     }
 
     throw new TypeError("Invalid descriptor type");
@@ -35,14 +35,14 @@ export class DiscreteScale<V extends Value, T> implements Scale<V, T> {
   range?: T[];
 
   static async fromDomain<R extends Row, V extends Value, T>(
-    table: Table<R>,
+    source: Table<R>,
     descriptor: DiscreteScaleDescriptor<R, V, T>,
   ): Promise<DiscreteScale<V, T>> {
     return new DiscreteScale(
       [
         ...new Set(
-          (await table.data).map((row, index) =>
-            descriptor.field(row, index, table)
+          (await source.data).map((row, index) =>
+            descriptor.field(row, index, source)
           ),
         ),
       ],
@@ -77,10 +77,10 @@ export class ContinuousScale<
     V extends ContinuousValue,
     T extends Interpolatable,
   >(
-    table: Table<R>,
+    source: Table<R>,
     descriptor: ContinuousScaleDescriptor<R, V, T>,
   ): Promise<ContinuousScale<V, T>> {
-    let valueNumbers = table
+    let valueNumbers = source
       .map((row, index, table) => ({
         value: continuousValueToNumber(descriptor.field(row, index, table)),
       }))

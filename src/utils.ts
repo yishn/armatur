@@ -149,3 +149,14 @@ export function equidistantPoints(
   if (n === 1) return [0];
   return [...Array(n)].map((_, i) => min + i * (max - min) / (n - 1));
 }
+
+export function equisizedSectionMiddlepoints(
+  n: number,
+  min: number = 0,
+  max: number = 1,
+) {
+  if (n <= 0) return [];
+  return equidistantPoints(n + 1, min, max)
+    .slice(0, -1)
+    .map((x) => x + (max - min) / n / 2);
+}
