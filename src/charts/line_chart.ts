@@ -1,4 +1,4 @@
-import type { Row, Value } from "../types.ts";
+import type { Row, Tagged, Value } from "../types.ts";
 import type {
   ChartOptions,
   DiscreteScaleDescriptor,
@@ -8,7 +8,7 @@ import type { Table } from "../table.ts";
 import { Chart } from "./chart.ts";
 import { Color, getDiscreteColor, rgba } from "./color.ts";
 import { DiscreteScale, Scale } from "./scale.ts";
-import { equisizedSectionMiddlepoints } from "../utils.ts";
+import { equisizedSectionMiddlepoints, stringifyRow } from "../utils.ts";
 
 export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
   drawPoints?: boolean;
@@ -20,13 +20,14 @@ export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
   };
 }
 
-export type LineChartRow = {
+export type LineChartRow<R extends Row> = {
   x: number;
   y: number;
   color: string;
+  data: string & Tagged<R>;
 };
 
-export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
+export class LineChart<R extends Row> extends Chart<R, LineChartRow<R>> {
   constructor(
     public readonly source: Table<R>,
     public readonly options: LineChartOptions<R>,
@@ -74,7 +75,12 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
           );
           if (x == null || y == null || color == null) return;
 
-          return { x, y, color: color.toString() };
+          return {
+            x,
+            y,
+            color: color.toString(),
+            data: stringifyRow(row),
+          };
         });
     });
   }

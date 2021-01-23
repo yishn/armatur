@@ -4,6 +4,7 @@ import {
   compareValues,
   jsonToRow,
   rowToJson,
+  stringifyRow,
 } from "../src/utils.ts";
 
 Deno.test("compareValues", () => {
@@ -28,7 +29,7 @@ Deno.test("compareLexicographically", () => {
   assertEquals(compareLexicographically([], []), 0);
 });
 
-Deno.test("rowToJson and jsonToRow", () => {
+Deno.test("rowToJson, jsonToRow, stringifyRow", () => {
   let row = {
     hello: "world",
     date: new Date(2021, 1, 12),
@@ -51,8 +52,8 @@ Deno.test("rowToJson and jsonToRow", () => {
   });
 
   assertEquals(
-    JSON.stringify(rowToJson(row)),
-    JSON.stringify(rowToJson(anotherRow)),
+    stringifyRow(row),
+    stringifyRow(anotherRow),
     "property order should not matter",
   );
 

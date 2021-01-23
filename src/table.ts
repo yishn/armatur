@@ -11,7 +11,10 @@ import {
   compareLexicographically,
   compareValues,
   jsonToRow,
+  parseRow,
   rowToJson,
+  stringifyRow,
+  stringifyValue,
 } from "./utils.ts";
 
 export class Table<R extends Row = any> implements AsyncIterable<R> {
@@ -146,7 +149,7 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
       let result = [] as R[][];
 
       (await this.data).forEach((row, index) => {
-        let key = JSON.stringify(fn(row, index, this));
+        let key = stringifyValue(fn(row, index, this));
 
         if (valueIndexMap[key] == null) {
           valueIndexMap[key] = result.length;
@@ -334,10 +337,10 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     return new Table(async () =>
       [
         ...new Set(
-          (await this.data).map((row) => JSON.stringify(rowToJson(row))),
+          (await this.data).map((row) => stringifyRow(row)),
         ),
       ]
-        .map((json) => jsonToRow(JSON.parse(json)))
+        .map((json) => parseRow(json))
     );
   }
 }

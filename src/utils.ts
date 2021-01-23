@@ -2,6 +2,7 @@ import type {
   ContinuousValue,
   Row,
   RowJson,
+  Tagged,
   Value,
   ValueJson,
 } from "./types.ts";
@@ -34,8 +35,7 @@ export function compareValues(value: Value, other: Value): -1 | 0 | 1 {
 }
 
 export function equalValues(value: Value, other: Value): boolean {
-  return JSON.stringify(valueToJson(value)) ===
-    JSON.stringify(valueToJson(other));
+  return stringifyValue(value) === stringifyValue(other);
 }
 
 export function compareLexicographically(
@@ -78,6 +78,14 @@ export function jsonToValue<V extends Value>(valueJson: ValueJson<V>): V {
   return valueJson as V;
 }
 
+export function stringifyValue<V extends Value>(value: V): string & Tagged<V> {
+  return JSON.stringify(valueToJson(value));
+}
+
+export function parseValue<V extends Value>(json: string & Tagged<V>): V {
+  return jsonToValue(JSON.parse(json));
+}
+
 export function rowToJson<R extends Row>(row: R): RowJson<R> {
   let result = {} as Partial<RowJson<R>>;
 
@@ -96,6 +104,14 @@ export function jsonToRow<R extends Row>(rowJson: RowJson<R>): R {
   }
 
   return result as R;
+}
+
+export function stringifyRow<R extends Row>(row: R): string & Tagged<R> {
+  return JSON.stringify(rowToJson(row));
+}
+
+export function parseRow<R extends Row>(json: string & Tagged<R>): R {
+  return jsonToRow(JSON.parse(json));
 }
 
 export function objectMap<T extends object, U extends object>(

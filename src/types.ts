@@ -1,5 +1,9 @@
 import type { Table } from "./table.ts";
 
+declare const tag: unique symbol;
+
+export type Tagged<T> = { [tag]?: T };
+
 export type Value = string | boolean | number | Date | null;
 
 export type ContinuousValue = Date | number;

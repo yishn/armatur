@@ -1,4 +1,4 @@
-import { clamp } from "../utils.ts";
+import { clamp, stringifyValue } from "../utils.ts";
 import type { Value } from "../types.ts";
 import type { IntoRgba, Rgba } from "./types.ts";
 
@@ -80,7 +80,7 @@ export function hsva(h: number, s: number, v: number, a: number = 1): Color {
 }
 
 export function getDiscreteColor(value: Value): Color {
-  let key = JSON.stringify(value);
+  let key = stringifyValue(value);
   let hash = [...key].map((_, i) => key.charCodeAt(i));
   let mod1 = (x: number) => x - Math.floor(x);
   let getIndexFromHash = (m: number, hash: number[]) =>
