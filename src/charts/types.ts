@@ -1,9 +1,5 @@
-import type {
-  ContinuousValue,
-  IterFn,
-  Row,
-  Value,
-} from "../types.ts";
+import type { ContinuousValue, IterFn, Row, Value } from "../types.ts";
+import type { ContinuousScale, DiscreteScale, Scale } from "./scale.ts";
 import type { Color } from "./color.ts";
 
 export type IntoRgba = string | Color | Rgba;
@@ -57,6 +53,19 @@ export interface ChartProperties<R extends Row> {
   color?: Color | ScaleDescriptor<R, Value, Color>;
   size?: number | ScaleDescriptor<R, Value, number>;
 }
+
+export type ScaleFromDescriptor<D> = ScaleDescriptor<any, any, any> extends D
+  ? D extends ScaleDescriptor<any, infer V, infer T> ? Scale<V, T> : never
+  : D extends DiscreteScaleDescriptor<any, infer V, infer T>
+    ? DiscreteScale<V, T>
+  : D extends ContinuousScaleDescriptor<any, infer V, infer T>
+    ? ContinuousScale<V, T>
+  : DiscreteScale<Value, D>;
+
+export type ChartScales<T extends ChartProperties<any> = ChartProperties<any>> =
+  {
+    [K in keyof T]: ScaleFromDescriptor<T[K]>;
+  };
 
 export interface ChartOptions<R extends Row> {
   properties: ChartProperties<R>;
