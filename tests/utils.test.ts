@@ -32,21 +32,21 @@ Deno.test("compareLexicographically", () => {
 Deno.test("rowToJson, jsonToRow, stringifyRow", () => {
   let row = {
     hello: "world",
-    date: new Date(2021, 1, 12),
+    date: new Date(Date.UTC(2021, 1, 12)),
     age: 5,
   };
 
   let anotherRow = {
     hello: "world",
     age: 5,
-    date: new Date(2021, 1, 12),
+    date: new Date(Date.UTC(2021, 1, 12)),
   };
 
   assertEquals(rowToJson(row), {
     hello: "world",
     date: {
       type: "date",
-      value: "2021-02-11T23:00:00.000Z",
+      value: "2021-02-12T00:00:00.000Z",
     },
     age: 5,
   });
