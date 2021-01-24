@@ -55,7 +55,8 @@ export interface ChartProperties<R extends Row> {
 }
 
 export type ScaleFromDescriptor<D> = ScaleDescriptor<any, any, any> extends D
-  ? D extends ScaleDescriptor<any, infer V, infer T> ? Scale<V, T> : never
+  ? D extends ScaleDescriptor<any, infer V, infer T> ? Scale<V, T>
+  : Exclude<D, ScaleDescriptor<any, any, any>>
   : D extends DiscreteScaleDescriptor<any, infer V, infer T>
     ? DiscreteScale<V, T>
   : D extends ContinuousScaleDescriptor<any, infer V, infer T>
@@ -78,14 +79,5 @@ export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
     x: ScaleDescriptor<R, Value, number>;
     y: ScaleDescriptor<R, Value, number>;
     color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
-  };
-}
-
-export interface PointChartOptions<R extends Row> extends ChartOptions<R> {
-  properties: {
-    x: ScaleDescriptor<R, Value, number>;
-    y: ScaleDescriptor<R, Value, number>;
-    color?: Color | ScaleDescriptor<R, Value, Color>;
-    size?: number | ScaleDescriptor<R, Value, number>;
   };
 }

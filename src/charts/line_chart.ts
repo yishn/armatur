@@ -8,9 +8,13 @@ import type {
 import { Deferred, deferred } from "../deps.ts";
 import type { Table } from "../table.ts";
 import { Chart } from "./chart.ts";
-import { Color, getDiscreteColor, rgba } from "./color.ts";
-import { DiscreteScale, Scale } from "./scale.ts";
-import { equisizedSectionMiddlepoints } from "../utils.ts";
+import { Color } from "./color.ts";
+import {
+  DiscreteScale,
+  getDefaultColorRange,
+  getDefaultXYRange,
+  Scale,
+} from "./scale.ts";
 
 export interface LineChartProperties<R extends Row> {
   x: ScaleDescriptor<R, Value, number>;
@@ -46,7 +50,7 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
       let xScale = await Scale.fromDomain(source, props.x);
       let yScale = await Scale.fromDomain(source, props.y);
       let colorScale = props.color instanceof Color || props.color == null
-        ? props.color ?? rgba(0, 0, 0)
+        ? props.color
         : await DiscreteScale.fromDomain(source, props.color);
 
       this.scales.resolve({
@@ -59,19 +63,9 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
         ? () => 1
         : props.color.field;
 
-      let defaultXRange = xScale instanceof DiscreteScale
-        ? equisizedSectionMiddlepoints(xScale.domainValues.length)
-        : [0, 1];
-      let defaultYRange = yScale instanceof DiscreteScale
-        ? equisizedSectionMiddlepoints(yScale.domainValues.length)
-        : [0, 1];
-      let defaultColorRange = colorScale instanceof Color
-        ? []
-        : colorScale.domainValues.map((value) =>
-          props.color instanceof Color || props.color == null
-            ? (props.color as Color | undefined) ?? rgba(0, 0, 0)
-            : getDiscreteColor(value)
-        );
+      let defaultXRange = getDefaultXYRange(xScale);
+      let defaultYRange = getDefaultXYRange(yScale);
+      let defaultColorRange = getDefaultColorRange(colorScale);
 
       let sourceIndexMap = new WeakMap<R, number>();
 
@@ -84,9 +78,12 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
         .map((row, i, table) => {
           let x = xScale.map(props.x.field(row, i, table), defaultXRange);
           let y = yScale.map(props.y.field(row, i, table), defaultYRange);
-          let color = colorScale instanceof Color
-            ? colorScale
-            : colorScale.map(colorField(row, i, table), defaultColorRange);
+          let color = defaultColorRange.length === 1
+            ? defaultColorRange[0]
+            : (colorScale as Scale<Value, Color>).map(
+              colorField(row, i, table),
+              defaultColorRange,
+            );
           if (x == null || y == null || color == null) return;
 
           return {

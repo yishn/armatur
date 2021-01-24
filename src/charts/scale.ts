@@ -9,15 +9,17 @@ import type {
 } from "./types.ts";
 import type { ContinuousValue, Row, Value } from "../types.ts";
 import type { Table } from "../table.ts";
-import { continuousValueToNumber, equalValues } from "../utils.ts";
+import {
+  continuousValueToNumber,
+  equalValues,
+  equidistantPoints,
+  equisizedSectionMiddlepoints,
+} from "../utils.ts";
 import { piecewiseInterpolation } from "./interpolation.ts";
+import { Color, getDiscreteColor, hsva, rgba } from "./color.ts";
 
-export interface Scale<V extends Value, T> {
-  map(value: V, defaultRange: T[]): T | undefined;
-}
-
-export namespace Scale {
-  export async function fromDomain<R extends Row, V extends Value, T>(
+export abstract class Scale<V extends Value, T> {
+  static async fromDomain<R extends Row, V extends Value, T>(
     source: Table<R>,
     descriptor: ScaleDescriptor<R, V, T>,
   ): Promise<Scale<V, T>> {
@@ -29,9 +31,11 @@ export namespace Scale {
 
     throw new TypeError("Invalid descriptor type");
   }
+
+  abstract map(value: V, defaultRange: T[]): T | undefined;
 }
 
-export class DiscreteScale<V extends Value, T> implements Scale<V, T> {
+export class DiscreteScale<V extends Value, T> extends Scale<V, T> {
   range?: T[];
 
   static async fromDomain<R extends Row, V extends Value, T>(
@@ -49,6 +53,8 @@ export class DiscreteScale<V extends Value, T> implements Scale<V, T> {
   }
 
   constructor(public domainValues: V[], options: DiscreteScaleOptions<T> = {}) {
+    super();
+
     this.range = options.range;
   }
 
@@ -65,7 +71,7 @@ export class DiscreteScale<V extends Value, T> implements Scale<V, T> {
 export class ContinuousScale<
   V extends ContinuousValue,
   T extends Interpolatable,
-> implements Scale<V, T> {
+> extends Scale<V, T> {
   includeZero?: boolean;
   range?: T[];
   rangeInterpolation?: InterpolationFn;
@@ -95,6 +101,8 @@ export class ContinuousScale<
     public domainMax: number,
     options: ContinuousScaleOptions<T> = {},
   ) {
+    super();
+
     this.includeZero = options.includeZero;
     this.range = options.range;
     this.rangeInterpolation = options.rangeInterpolation;
@@ -114,4 +122,40 @@ export class ContinuousScale<
 
     return piecewiseInterpolation(lambda, range, this.rangeInterpolation);
   }
+}
+
+export function getDefaultXYRange(scale: Scale<Value, number>): number[] {
+  return scale instanceof DiscreteScale
+    ? equisizedSectionMiddlepoints(scale.domainValues.length)
+    : [0, 1];
+}
+
+export function getDefaultColorRange(
+  scale: Color | Scale<Value, Color> | undefined,
+): Color[] {
+  return scale instanceof Color
+    ? [scale]
+    : scale instanceof DiscreteScale
+    ? scale.domainValues.map((value) => getDiscreteColor(value))
+    : scale instanceof ContinuousScale
+    ? [
+      hsva(2 / 3, 3 / 4, 1), // blue
+      hsva(300 / 360, 3 / 4, 1), // violet
+      hsva(0, 3 / 4, 1), // red
+    ]
+    : [
+      hsva(2 / 3, 3 / 4, 1), // blue
+    ];
+}
+
+export function getDefaultSizeRange(
+  scale: number | Scale<Value, number> | undefined,
+): number[] {
+  return typeof scale === "number"
+    ? [scale]
+    : scale instanceof DiscreteScale
+    ? equidistantPoints(scale.domainValues.length, 8, 80)
+    : scale instanceof ContinuousScale
+    ? [8, 80]
+    : [8];
 }
