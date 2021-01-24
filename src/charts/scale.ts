@@ -39,13 +39,11 @@ export class DiscreteScale<V extends Value, T> implements Scale<V, T> {
     descriptor: DiscreteScaleDescriptor<R, V, T>,
   ): Promise<DiscreteScale<V, T>> {
     return new DiscreteScale(
-      [
-        ...new Set(
-          (await source.data).map((row, index) =>
-            descriptor.field(row, index, source)
-          ),
-        ),
-      ],
+      (await source
+        .map((row, i, table) => ({ value: descriptor.field(row, i, table) }))
+        .unique()
+        .data)
+        .map((row) => row.value),
       descriptor,
     );
   }

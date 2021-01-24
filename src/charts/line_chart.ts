@@ -45,16 +45,9 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
 
       let xScale = await Scale.fromDomain(source, props.x);
       let yScale = await Scale.fromDomain(source, props.y);
-      let colorScale = await DiscreteScale.fromDomain(
-        source,
-        props.color instanceof Color || props.color == null
-          ? {
-            type: "discrete",
-            field: () => 1,
-            range: [props.color ?? rgba(0, 0, 0)],
-          }
-          : props.color,
-      );
+      let colorScale = props.color instanceof Color || props.color == null
+        ? props.color ?? rgba(0, 0, 0)
+        : await DiscreteScale.fromDomain(source, props.color);
 
       this.scales.resolve({
         x: xScale,
@@ -91,10 +84,9 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
         .map((row, i, table) => {
           let x = xScale.map(props.x.field(row, i, table), defaultXRange);
           let y = yScale.map(props.y.field(row, i, table), defaultYRange);
-          let color = colorScale.map(
-            colorField(row, i, table),
-            defaultColorRange,
-          );
+          let color = colorScale instanceof Color
+            ? colorScale
+            : colorScale.map(colorField(row, i, table), defaultColorRange);
           if (x == null || y == null || color == null) return;
 
           return {

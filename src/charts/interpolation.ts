@@ -14,6 +14,8 @@ export function interpolate<I extends Interpolatable>(
   end: I,
   interpolation: InterpolationFn = linearInterpolation,
 ): I | undefined {
+  lambda = clamp(lambda, 0, 1);
+
   if (typeof start === "number" && typeof end === "number") {
     return interpolation(lambda, start, end) as I;
   } else if (start instanceof Date && end instanceof Date) {
@@ -37,9 +39,10 @@ export function piecewiseInterpolation<I extends Interpolatable>(
   interpolation: InterpolationFn = linearInterpolation,
 ): I | undefined {
   let n = values.length;
+  if (n <= 1) return values[0];
+
   lambda = clamp(lambda, 0, 1);
 
-  if (n <= 1) return values[0];
   if (n === 2) {
     return interpolate(lambda, values[0], values[1], interpolation);
   }

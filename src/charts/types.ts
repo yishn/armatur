@@ -2,7 +2,7 @@ import type { ContinuousValue, IterFn, Row, Value } from "../types.ts";
 import type { ContinuousScale, DiscreteScale, Scale } from "./scale.ts";
 import type { Color } from "./color.ts";
 
-export type IntoRgba = string | Color | Rgba;
+export type IntoColor = string | Color | Rgba;
 
 export type Rgba = [r: number, g: number, b: number, a: number];
 
@@ -60,7 +60,7 @@ export type ScaleFromDescriptor<D> = ScaleDescriptor<any, any, any> extends D
     ? DiscreteScale<V, T>
   : D extends ContinuousScaleDescriptor<any, infer V, infer T>
     ? ContinuousScale<V, T>
-  : DiscreteScale<Value, D>;
+  : D;
 
 export type ChartScales<T extends ChartProperties<any> = ChartProperties<any>> =
   {

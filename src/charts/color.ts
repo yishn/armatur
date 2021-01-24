@@ -1,6 +1,6 @@
 import { clamp, stringifyValue } from "../utils.ts";
 import type { Value } from "../types.ts";
-import type { IntoRgba, Rgba } from "./types.ts";
+import type { IntoColor, Rgba } from "./types.ts";
 
 export class Color {
   constructor(
@@ -44,10 +44,10 @@ function hexToRgba(color: string): Color {
 }
 
 export function rgba(r: number, g: number, b: number, a?: number): Color;
-export function rgba(value: IntoRgba): Color;
+export function rgba(value: IntoColor): Color;
 export function rgba(...args: any[]): Color {
   if (args.length === 1) {
-    let value = args[0] as IntoRgba;
+    let value = args[0] as IntoColor;
 
     if (typeof value === "string") return hexToRgba(value);
     if (value instanceof Color) return value;
