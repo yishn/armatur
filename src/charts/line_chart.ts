@@ -71,23 +71,28 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
 
       return source
         .inspect((row, i) => sourceIndexMap.set(row, i))
-        .sortBy((row, i) => [
-          colorField(row, i, source),
-          props[options.keyAxis ?? "x"].field(row, i, source),
-        ])
-        .map((row, i, table) => {
-          let x = xScale.map(props.x.field(row, i, table), defaultXRange);
-          let y = yScale.map(props.y.field(row, i, table), defaultYRange);
+        .sortBy((row) => {
+          let i = sourceIndexMap.get(row)!;
+
+          return [
+            colorField(row, i, source),
+            props[options.keyAxis ?? "x"].field(row, i, source),
+          ];
+        })
+        .map((row) => {
+          let i = sourceIndexMap.get(row)!;
+          let x = xScale.map(props.x.field(row, i, source), defaultXRange);
+          let y = yScale.map(props.y.field(row, i, source), defaultYRange);
           let color = defaultColorRange.length === 1
             ? defaultColorRange[0]
             : (colorScale as Scale<Value, Color>).map(
-              colorField(row, i, table),
+              colorField(row, i, source),
               defaultColorRange,
             );
           if (x == null || y == null || color == null) return;
 
           return {
-            index: sourceIndexMap.get(row)!,
+            index: i,
             x,
             y,
             color: color.toString(),

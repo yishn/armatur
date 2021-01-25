@@ -45,7 +45,7 @@ export class PointChart<R extends Row> extends Chart<R, PointChartRow> {
       let xScale = await Scale.fromDomain(source, props.x);
       let yScale = await Scale.fromDomain(source, props.y);
       let colorScale = props.color instanceof Color || props.color == null
-        ? props.color ?? rgba(0, 0, 0)
+        ? props.color
         : await Scale.fromDomain(source, props.color);
       let sizeScale = typeof props.size === "number" || props.size == null
         ? props.size
