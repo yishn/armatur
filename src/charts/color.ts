@@ -82,13 +82,8 @@ export function hsva(h: number, s: number, v: number, a: number = 1): Color {
 export function getDiscreteColor(value: Value): Color {
   let key = stringifyValue(value);
   let hash = [...key].map((_, i) => key.charCodeAt(i));
-  let mod1 = (x: number) => x - Math.floor(x);
   let getIndexFromHash = (m: number, hash: number[]) =>
     (hash.reduce((acc, x) => (acc * 33) ^ x, 5381) >>> 0) % m;
 
-  return hsva(
-    mod1(79 / 997 * getIndexFromHash(997, hash)),
-    3 / 4,
-    1,
-  );
+  return hsva(getIndexFromHash(1000, hash) / 1000, 3 / 4, 1);
 }

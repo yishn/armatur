@@ -47,7 +47,7 @@ export type ScaleDescriptor<R extends Row, V extends Value, T> =
     T extends Interpolatable ? T : never
   >;
 
-export interface ChartProperties<R extends Row> {
+export interface ChartScaleDescriptors<R extends Row> {
   x: ScaleDescriptor<R, Value, number>;
   y: ScaleDescriptor<R, Value, number>;
   color?: Color | ScaleDescriptor<R, Value, Color>;
@@ -63,19 +63,20 @@ export type ScaleFromDescriptor<D> = ScaleDescriptor<any, any, any> extends D
     ? ContinuousScale<V, T>
   : D;
 
-export type ChartScales<T extends ChartProperties<any> = ChartProperties<any>> =
-  {
-    [K in keyof T]: ScaleFromDescriptor<T[K]>;
-  };
+export type ChartScales<
+  T extends ChartScaleDescriptors<any> = ChartScaleDescriptors<any>,
+> = {
+  [K in keyof T]: ScaleFromDescriptor<T[K]>;
+};
 
 export interface ChartOptions<R extends Row> {
-  properties: ChartProperties<R>;
+  scales: ChartScaleDescriptors<R>;
 }
 
 export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
   stacked?: boolean;
   keyAxis?: "x" | "y";
-  properties: {
+  scales: {
     x: ScaleDescriptor<R, Value, number>;
     y: ScaleDescriptor<R, Value, number>;
     color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
