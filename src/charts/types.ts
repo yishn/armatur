@@ -1,4 +1,11 @@
-import type { ContinuousValue, IterFn, Row, Value } from "../types.ts";
+import type {
+  ContinuousValue,
+  IterFn,
+  Row,
+  RowJson,
+  TableJson,
+  Value,
+} from "../types.ts";
 import type { ContinuousScale, DiscreteScale, Scale } from "./scale.ts";
 import type { Color } from "./color.ts";
 
@@ -13,6 +20,11 @@ export type InterpolationFn = (
   start: number,
   end: number,
 ) => number;
+
+export interface ChartJson<R extends Row, S extends Row> extends TableJson<S> {
+  options: ChartOptions<R>;
+  source: RowJson<R>[];
+}
 
 export interface DiscreteScaleOptions<T> {
   range?: T[];
@@ -55,12 +67,11 @@ export interface ChartScaleDescriptors<R extends Row> {
 }
 
 export type ChartScaleRanges = {
-  [K in keyof ChartScaleDescriptors<Row>]-?:
-    Extract<
-      ChartScaleDescriptors<Row>[K],
-      ScaleDescriptor<any, any, any>
-    > extends ScaleDescriptor<any, any, infer T> ? T[]
-      : undefined;
+  [K in keyof ChartScaleDescriptors<Row>]-?: Extract<
+    ChartScaleDescriptors<Row>[K],
+    ScaleDescriptor<any, any, any>
+  > extends ScaleDescriptor<any, any, infer T> ? T[]
+    : undefined;
 };
 
 export type ScaleFromDescriptor<D> = ScaleDescriptor<any, any, any> extends D

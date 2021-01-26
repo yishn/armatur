@@ -5,6 +5,7 @@ import type {
   IterFn,
   Row,
   RowJson,
+  TableJson,
   Value,
 } from "./types.ts";
 import {
@@ -44,12 +45,14 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     return Table.empty(others.length).flatMap((_, i) => others[i]);
   }
 
-  static fromJSON<R extends Row>(json: RowJson<R>[]): Table<R> {
-    return new Table(json.map((row) => jsonToRow(row)));
+  static fromJSON<R extends Row>(json: TableJson<R>): Table<R> {
+    return new Table(json.data.map((row) => jsonToRow(row)));
   }
 
-  async toJSON(): Promise<RowJson<R>[]> {
-    return (await this.data).map((row) => rowToJson(row));
+  async toJSON(): Promise<TableJson<R>> {
+    return {
+      data: (await this.data).map((row) => rowToJson(row)),
+    };
   }
 
   async *[Symbol.asyncIterator]() {

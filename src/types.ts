@@ -26,6 +26,10 @@ export type IntoTable<R extends Row> =
   | Promise<Table<R> | readonly R[]>
   | (() => Promise<Table<R> | readonly R[]>);
 
+export interface TableJson<R extends Row> {
+  data: RowJson<R>[];
+}
+
 export type IterFn<R extends Row, T> = (
   row: Readonly<R>,
   index: number,
