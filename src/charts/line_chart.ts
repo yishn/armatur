@@ -1,7 +1,5 @@
 import type { Row, Value } from "../types.ts";
 import type {
-  ChartOptions,
-  ChartScaleDescriptors,
   ChartScales,
   DiscreteScaleDescriptor,
   ScaleDescriptor,
@@ -11,7 +9,7 @@ import type { Table } from "../table.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Color } from "./color.ts";
 import { Scale } from "./scale.ts";
-import { getDefaultColorRange, getDefaultXYRange } from "./range.ts";
+import { getDefaultRanges } from "./range.ts";
 
 export interface LineChartScaleDescriptors<R extends Row> {
   x: ScaleDescriptor<R, Value, number>;
@@ -24,7 +22,6 @@ export type LineChartScales<R extends Row> = ChartScales<
 >;
 
 export interface LineChartOptions<R extends Row> {
-  drawPoints?: boolean;
   keyAxis?: "x" | "y";
   scales: LineChartScaleDescriptors<R>;
 }
@@ -53,10 +50,7 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
         ? () => 1
         : scaleDescriptors.color.field;
 
-      let defaultXRange = getDefaultXYRange(scales.x);
-      let defaultYRange = getDefaultXYRange(scales.y);
-      let defaultColorRange = getDefaultColorRange(scales.color);
-
+      let defaultRanges = getDefaultRanges(scales);
       let sourceIndexMap = new WeakMap<R, number>();
 
       return source
@@ -73,17 +67,17 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
           let i = sourceIndexMap.get(row)!;
           let x = scales.x.map(
             scaleDescriptors.x.field(row, i, source),
-            defaultXRange,
+            defaultRanges.x,
           );
           let y = scales.y.map(
             scaleDescriptors.y.field(row, i, source),
-            defaultYRange,
+            defaultRanges.y,
           );
-          let color = defaultColorRange.length <= 1
-            ? defaultColorRange[0]
+          let color = defaultRanges.color.length <= 1
+            ? defaultRanges.color[0]
             : (scales.color as Scale<Value, Color>).map(
               colorField(row, i, source),
-              defaultColorRange,
+              defaultRanges.color,
             );
           if (x == null || y == null || color == null) return;
 

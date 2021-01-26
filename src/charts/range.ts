@@ -2,11 +2,18 @@ import type { Value } from "../types.ts";
 import { equidistantPoints, equisizedSectionMiddlepoints } from "../utils.ts";
 import { Color, getDiscreteColor, hsva } from "./color.ts";
 import { ContinuousScale, DiscreteScale, Scale } from "./scale.ts";
+import { ChartScaleRanges, ChartScales } from "./types.ts";
 
-export function getDefaultXYRange(scale: Scale<Value, number>): number[] {
+export function getDefaultXRange(scale: Scale<Value, number>): number[] {
   return scale instanceof DiscreteScale
     ? equisizedSectionMiddlepoints(scale.domainValues.length)
     : [0, 1];
+}
+
+export function getDefaultYRange(scale: Scale<Value, number>): number[] {
+  return scale instanceof DiscreteScale
+    ? equisizedSectionMiddlepoints(scale.domainValues.length)
+    : [1, 0];
 }
 
 export function getDefaultColorRange(
@@ -37,4 +44,13 @@ export function getDefaultSizeRange(
     : scale instanceof ContinuousScale
     ? [8, 80]
     : [8];
+}
+
+export function getDefaultRanges(scales: ChartScales): ChartScaleRanges {
+  return {
+    x: getDefaultXRange(scales.x),
+    y: getDefaultYRange(scales.y),
+    color: getDefaultColorRange(scales.color),
+    size: getDefaultSizeRange(scales.size),
+  };
 }

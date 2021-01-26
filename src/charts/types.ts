@@ -54,6 +54,15 @@ export interface ChartScaleDescriptors<R extends Row> {
   size?: number | ScaleDescriptor<R, Value, number>;
 }
 
+export type ChartScaleRanges = {
+  [K in keyof ChartScaleDescriptors<Row>]-?:
+    Extract<
+      ChartScaleDescriptors<Row>[K],
+      ScaleDescriptor<any, any, any>
+    > extends ScaleDescriptor<any, any, infer T> ? T[]
+      : undefined;
+};
+
 export type ScaleFromDescriptor<D> = ScaleDescriptor<any, any, any> extends D
   ? D extends ScaleDescriptor<any, any, infer T> ? Scale<Value, T>
   : Exclude<D, ScaleDescriptor<any, any, any>>

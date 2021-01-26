@@ -1,20 +1,11 @@
 import type { Row, Value } from "../types.ts";
-import type {
-  ChartOptions,
-  ChartScaleDescriptors,
-  ChartScales,
-  ScaleDescriptor,
-} from "./types.ts";
+import type { ChartScales, ScaleDescriptor } from "./types.ts";
 import type { Table } from "../table.ts";
 import { Deferred, deferred } from "../deps.ts";
 import { Color } from "./color.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Scale } from "./scale.ts";
-import {
-  getDefaultColorRange,
-  getDefaultSizeRange,
-  getDefaultXYRange,
-} from "./range.ts";
+import { getDefaultRanges } from "./range.ts";
 
 export interface PointChartScaleDescriptors<R extends Row> {
   x: ScaleDescriptor<R, Value, number>;
@@ -51,39 +42,36 @@ export class PointChart<R extends Row> extends Chart<R, PointChartRow> {
       let scales = await getScalesFromDescriptors(source, scaleDescriptors);
       this.scales.resolve(scales);
 
-      let defaultXRange = getDefaultXYRange(scales.x);
-      let defaultYRange = getDefaultXYRange(scales.y);
-      let defaultColorRange = getDefaultColorRange(scales.color);
-      let defaultSizeRange = getDefaultSizeRange(scales.size);
+      let defaultRanges = getDefaultRanges(scales);
 
       return source.map((row, i, table) => {
         let x = scales.x.map(
           scaleDescriptors.x.field(row, i, table),
-          defaultXRange,
+          defaultRanges.x,
         );
         let y = scales.y.map(
           scaleDescriptors.y.field(row, i, table),
-          defaultYRange,
+          defaultRanges.y,
         );
-        let color = defaultColorRange.length <= 1
-          ? defaultColorRange[0]
+        let color = defaultRanges.color.length <= 1
+          ? defaultRanges.color[0]
           : (scales.color as Scale<Value, Color>).map(
             (scaleDescriptors.color as ScaleDescriptor<R, Value, Color>).field(
               row,
               i,
               table,
             ),
-            defaultColorRange,
+            defaultRanges.color,
           );
-        let size = defaultSizeRange.length <= 1
-          ? defaultSizeRange[0]
+        let size = defaultRanges.size.length <= 1
+          ? defaultRanges.size[0]
           : (scales.size as Scale<Value, number>).map(
             (scaleDescriptors.size as ScaleDescriptor<R, Value, number>).field(
               row,
               i,
               table,
             ),
-            defaultSizeRange,
+            defaultRanges.size,
           );
         if (x == null || y == null || color == null || size == null) return;
 

@@ -10,7 +10,7 @@ import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Deferred, deferred } from "../deps.ts";
 import { Table } from "../table.ts";
 import { DiscreteScale, Scale } from "./scale.ts";
-import { getDefaultColorRange, getDefaultXYRange } from "./range.ts";
+import { getDefaultRanges } from "./range.ts";
 import { equisizedSectionMiddlepoints } from "../utils.ts";
 
 export interface BarChartScaleDescriptors<R extends Row> {
@@ -47,33 +47,27 @@ export class BarChart<R extends Row> extends Chart<R, BarChartRow> {
       keyAxis?: "x";
       scales: {
         x: DiscreteScaleDescriptor<R, Value, number>;
-        y: ScaleDescriptor<R, Value, number>;
-        color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
-      };
+      } & BarChartScaleDescriptors<R>;
     } | {
       stacked: true;
       keyAxis?: "x";
       scales: {
         x: DiscreteScaleDescriptor<R, Value, number>;
         y: ContinuousScaleDescriptor<R, number, number>;
-        color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
-      };
+      } & BarChartScaleDescriptors<R>;
     } | {
       stacked?: false;
       keyAxis: "y";
       scales: {
-        x: ScaleDescriptor<R, Value, number>;
         y: DiscreteScaleDescriptor<R, Value, number>;
-        color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
-      };
+      } & BarChartScaleDescriptors<R>;
     } | {
       stacked: true;
       keyAxis: "y";
       scales: {
         x: ContinuousScaleDescriptor<R, number, number>;
         y: DiscreteScaleDescriptor<R, Value, number>;
-        color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
-      };
+      } & BarChartScaleDescriptors<R>;
     },
   ) {
     super(async () => {
@@ -87,9 +81,7 @@ export class BarChart<R extends Row> extends Chart<R, BarChartRow> {
         throw new TypeError("Scale defined at keyAxis must be a DiscreteScale");
       }
 
-      let defaultXRange = getDefaultXYRange(scales.x);
-      let defaultYRange = getDefaultXYRange(scales.y);
-      let defaultColorRange = getDefaultColorRange(scales.color);
+      let defaultRanges = getDefaultRanges(scales);
 
       let colorFieldFn = scaleDescriptors.color instanceof Color ||
           scaleDescriptors.color == null
@@ -106,18 +98,18 @@ export class BarChart<R extends Row> extends Chart<R, BarChartRow> {
       return source.map((row, i, table) => {
         let x = scales.x.map(
           scaleDescriptors.x.field(row, i, table),
-          defaultXRange,
+          defaultRanges.x,
         );
         let y = scales.y.map(
           scaleDescriptors.y.field(row, i, table),
-          defaultYRange,
+          defaultRanges.y,
         );
         let key = options.keyAxis === "y" ? y : x;
         let color = colorGroupsCount <= 1
-          ? defaultColorRange[0]
+          ? defaultRanges.color[0]
           : (scales.color as Scale<Value, Color>).map(
             colorFieldFn(row, i, table),
-            defaultColorRange,
+            defaultRanges.color,
           );
         if (key == null || color == null) return;
 
