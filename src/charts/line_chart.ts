@@ -1,15 +1,16 @@
 import type { Row, Value } from "../types.ts";
 import type {
   ChartOptions,
+  ChartScaleDescriptors,
   ChartScales,
   DiscreteScaleDescriptor,
   ScaleDescriptor,
 } from "./types.ts";
 import { Deferred, deferred } from "../deps.ts";
 import type { Table } from "../table.ts";
-import { Chart } from "./chart.ts";
+import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Color } from "./color.ts";
-import { DiscreteScale, Scale } from "./scale.ts";
+import { Scale } from "./scale.ts";
 import { getDefaultColorRange, getDefaultXYRange } from "./range.ts";
 
 export interface LineChartScaleDescriptors<R extends Row> {
@@ -22,7 +23,7 @@ export type LineChartScales<R extends Row> = ChartScales<
   LineChartScaleDescriptors<R>
 >;
 
-export interface LineChartOptions<R extends Row> extends ChartOptions<R> {
+export interface LineChartOptions<R extends Row> {
   drawPoints?: boolean;
   keyAxis?: "x" | "y";
   scales: LineChartScaleDescriptors<R>;
@@ -43,27 +44,18 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
     public readonly options: LineChartOptions<R>,
   ) {
     super(async () => {
-      let { scales } = options;
+      let { scales: scaleDescriptors } = options;
+      let scales = await getScalesFromDescriptors(source, scaleDescriptors);
+      this.scales.resolve(scales);
 
-      let xScale = await Scale.fromDomain(source, scales.x);
-      let yScale = await Scale.fromDomain(source, scales.y);
-      let colorScale = scales.color instanceof Color || scales.color == null
-        ? scales.color
-        : await DiscreteScale.fromDomain(source, scales.color);
-
-      this.scales.resolve({
-        x: xScale,
-        y: yScale,
-        color: colorScale,
-      });
-
-      let colorField = scales.color instanceof Color || scales.color == null
+      let colorField = scaleDescriptors.color instanceof Color ||
+          scaleDescriptors.color == null
         ? () => 1
-        : scales.color.field;
+        : scaleDescriptors.color.field;
 
-      let defaultXRange = getDefaultXYRange(xScale);
-      let defaultYRange = getDefaultXYRange(yScale);
-      let defaultColorRange = getDefaultColorRange(colorScale);
+      let defaultXRange = getDefaultXYRange(scales.x);
+      let defaultYRange = getDefaultXYRange(scales.y);
+      let defaultColorRange = getDefaultColorRange(scales.color);
 
       let sourceIndexMap = new WeakMap<R, number>();
 
@@ -74,16 +66,22 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
 
           return [
             colorField(row, i, source),
-            scales[options.keyAxis ?? "x"].field(row, i, source),
+            scaleDescriptors[options.keyAxis ?? "x"].field(row, i, source),
           ];
         })
         .map((row) => {
           let i = sourceIndexMap.get(row)!;
-          let x = xScale.map(scales.x.field(row, i, source), defaultXRange);
-          let y = yScale.map(scales.y.field(row, i, source), defaultYRange);
-          let color = defaultColorRange.length === 1
+          let x = scales.x.map(
+            scaleDescriptors.x.field(row, i, source),
+            defaultXRange,
+          );
+          let y = scales.y.map(
+            scaleDescriptors.y.field(row, i, source),
+            defaultYRange,
+          );
+          let color = defaultColorRange.length <= 1
             ? defaultColorRange[0]
-            : (colorScale as Scale<Value, Color>).map(
+            : (scales.color as Scale<Value, Color>).map(
               colorField(row, i, source),
               defaultColorRange,
             );

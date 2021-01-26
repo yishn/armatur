@@ -7,20 +7,14 @@ import type {
   InterpolationFn,
   ScaleDescriptor,
 } from "./types.ts";
-import type { ContinuousValue, Row, Value } from "../types.ts";
-import type { Table } from "../table.ts";
-import {
-  continuousValueToNumber,
-  equalValues,
-  equidistantPoints,
-  equisizedSectionMiddlepoints,
-} from "../utils.ts";
+import type { ContinuousValue, IntoTable, Row, Value } from "../types.ts";
+import { Table } from "../table.ts";
+import { continuousValueToNumber, equalValues } from "../utils.ts";
 import { piecewiseInterpolation } from "./interpolation.ts";
-import { Color, getDiscreteColor, hsva, rgba } from "./color.ts";
 
 export abstract class Scale<V extends Value, T> {
   static async fromDomain<R extends Row, V extends Value, T>(
-    source: Table<R>,
+    source: IntoTable<R>,
     descriptor: ScaleDescriptor<R, V, T>,
   ): Promise<Scale<V, T>> {
     if (descriptor.type === "discrete") {
@@ -39,11 +33,11 @@ export class DiscreteScale<V extends Value, T> extends Scale<V, T> {
   range?: T[];
 
   static async fromDomain<R extends Row, V extends Value, T>(
-    source: Table<R>,
+    source: IntoTable<R>,
     descriptor: DiscreteScaleDescriptor<R, V, T>,
   ): Promise<DiscreteScale<V, T>> {
     return new DiscreteScale(
-      (await source
+      (await new Table(source)
         .map((row, i, table) => ({ value: descriptor.field(row, i, table) }))
         .unique()
         .data)
@@ -81,10 +75,10 @@ export class ContinuousScale<
     V extends ContinuousValue,
     T extends Interpolatable,
   >(
-    source: Table<R>,
+    source: IntoTable<R>,
     descriptor: ContinuousScaleDescriptor<R, V, T>,
   ): Promise<ContinuousScale<V, T>> {
-    let valueNumbers = source
+    let valueNumbers = new Table(source)
       .map((row, index, table) => ({
         value: continuousValueToNumber(descriptor.field(row, index, table)),
       }))

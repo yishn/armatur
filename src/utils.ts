@@ -116,10 +116,27 @@ export function parseRow<R extends Row>(json: string & Tagged<R>): R {
 
 export function objectMap<T extends object, U extends object>(
   obj: T,
-  fn: <K extends keyof T>(key: K, value: T[K]) => Partial<U>,
+  fn: <K extends keyof T>(
+    key: K,
+    value: T[K],
+  ) => Partial<U>,
 ): U {
   return Object.entries(obj)
     .map(([key, value]) => fn(key as keyof T, value))
+    .reduce((acc, part) => ({ ...acc, ...part }), {} as Partial<U>) as U;
+}
+
+export async function asyncObjectMap<T extends object, U extends object>(
+  obj: T,
+  fn: <K extends keyof T>(
+    key: K,
+    value: T[K],
+  ) => Partial<U> | Promise<Partial<U>>,
+): Promise<U> {
+  return (await Promise.all(
+    Object.entries(obj)
+      .map(([key, value]) => fn(key as keyof T, value)),
+  ) as Partial<U>[])
     .reduce((acc, part) => ({ ...acc, ...part }), {} as Partial<U>) as U;
 }
 

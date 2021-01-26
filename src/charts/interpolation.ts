@@ -17,7 +17,9 @@ export function interpolate<I extends Interpolatable>(
   lambda = clamp(lambda, 0, 1);
 
   if (typeof start === "number" && typeof end === "number") {
-    return interpolation(lambda, start, end) as I;
+    let result = interpolation(lambda, start, end);
+
+    return isNaN(result) || !isFinite(result) ? undefined : result as I;
   } else if (start instanceof Date && end instanceof Date) {
     return new Date(
       interpolate(lambda, start.getTime(), end.getTime(), interpolation)!,

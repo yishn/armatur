@@ -55,7 +55,7 @@ export interface ChartScaleDescriptors<R extends Row> {
 }
 
 export type ScaleFromDescriptor<D> = ScaleDescriptor<any, any, any> extends D
-  ? D extends ScaleDescriptor<any, infer V, infer T> ? Scale<V, T>
+  ? D extends ScaleDescriptor<any, any, infer T> ? Scale<Value, T>
   : Exclude<D, ScaleDescriptor<any, any, any>>
   : D extends DiscreteScaleDescriptor<any, infer V, infer T>
     ? DiscreteScale<V, T>
@@ -71,14 +71,4 @@ export type ChartScales<
 
 export interface ChartOptions<R extends Row> {
   scales: ChartScaleDescriptors<R>;
-}
-
-export interface BarChartOptions<R extends Row> extends ChartOptions<R> {
-  stacked?: boolean;
-  keyAxis?: "x" | "y";
-  scales: {
-    x: ScaleDescriptor<R, Value, number>;
-    y: ScaleDescriptor<R, Value, number>;
-    color?: Color | DiscreteScaleDescriptor<R, Value, Color>;
-  };
 }
