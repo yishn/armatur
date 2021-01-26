@@ -52,8 +52,8 @@ Deno.test("rowToJson, jsonToRow, stringifyRow", () => {
   });
 
   assertEquals(
-    stringifyRow(row),
-    stringifyRow(anotherRow),
+    stringifyRow(row, true),
+    stringifyRow(anotherRow, true),
     "property order should not matter",
   );
 

@@ -86,10 +86,15 @@ export function parseValue<V extends Value>(json: string & Tagged<V>): V {
   return jsonToValue(JSON.parse(json));
 }
 
-export function rowToJson<R extends Row>(row: R): RowJson<R> {
+export function rowToJson<R extends Row>(
+  row: R,
+  orderKeys: boolean = false,
+): RowJson<R> {
   let result = {} as Partial<RowJson<R>>;
+  let keys = Object.keys(row) as (keyof R)[];
+  if (orderKeys) keys.sort();
 
-  for (let key of Object.keys(row).sort() as (keyof R)[]) {
+  for (let key of keys) {
     result[key] = valueToJson(row[key]);
   }
 
@@ -106,8 +111,11 @@ export function jsonToRow<R extends Row>(rowJson: RowJson<R>): R {
   return result as R;
 }
 
-export function stringifyRow<R extends Row>(row: R): string & Tagged<R> {
-  return JSON.stringify(rowToJson(row));
+export function stringifyRow<R extends Row>(
+  row: R,
+  orderKeys?: boolean,
+): string & Tagged<R> {
+  return JSON.stringify(rowToJson(row, orderKeys));
 }
 
 export function parseRow<R extends Row>(json: string & Tagged<R>): R {

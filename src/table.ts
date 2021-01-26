@@ -337,7 +337,7 @@ export class Table<R extends Row = any> implements AsyncIterable<R> {
     return new Table(async () =>
       [
         ...new Set(
-          (await this.data).map((row) => stringifyRow(row)),
+          (await this.data).map((row) => stringifyRow(row, true)),
         ),
       ]
         .map((json) => parseRow(json))
