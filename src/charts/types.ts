@@ -60,8 +60,8 @@ export type ScaleDescriptor<R extends Row, V extends Value, T> =
   >;
 
 export interface ChartScaleDescriptors<R extends Row> {
-  x: ScaleDescriptor<R, Value, number>;
-  y: ScaleDescriptor<R, Value, number>;
+  x?: ScaleDescriptor<R, Value, number>;
+  y?: ScaleDescriptor<R, Value, number>;
   color?: Color | ScaleDescriptor<R, Value, Color>;
   size?: number | ScaleDescriptor<R, Value, number>;
 }
@@ -92,3 +92,7 @@ export type ChartScales<
 export interface ChartOptions<R extends Row> {
   scales: ChartScaleDescriptors<R>;
 }
+
+export type ChartRow = {
+  index: number;
+};

@@ -1,10 +1,13 @@
+import { formatDate, parseDate as _parseDate } from "./deps.ts";
 import type {
   ContinuousValue,
+  FormatValueOptions,
   Row,
   RowJson,
   Tagged,
   Value,
   ValueJson,
+  ValueType,
 } from "./types.ts";
 
 export function compareValues(value: Value, other: Value): -1 | 0 | 1 {
@@ -148,26 +151,27 @@ export async function asyncObjectMap<T extends object, U extends object>(
     .reduce((acc, part) => ({ ...acc, ...part }), {} as Partial<U>) as U;
 }
 
+export function typeOf(value: Value): ValueType;
 export function typeOf(value: Value, type: "string"): value is string;
 export function typeOf(value: Value, type: "boolean"): value is boolean;
 export function typeOf(value: Value, type: "number"): value is number;
 export function typeOf(value: Value, type: "date"): value is Date;
 export function typeOf(value: Value, type: "null"): value is null;
-export function typeOf(
-  value: Value,
-  type:
-    | "string"
-    | "boolean"
-    | "number"
-    | "date"
-    | "null",
-): boolean;
-export function typeOf(value: Value, type: string): boolean {
-  return typeof value === "string" && type === "string" ||
-    typeof value === "boolean" && type === "boolean" ||
-    typeof value === "number" && type === "number" ||
-    value instanceof Date && type === "date" ||
-    value == null && type === "null";
+export function typeOf(value: Value, type: ValueType): boolean;
+export function typeOf(value: Value, type?: string): string | boolean {
+  let detectedType = typeof value === "string"
+    ? "string"
+    : typeof value === "boolean"
+    ? "boolean"
+    : typeof value === "number"
+    ? "number"
+    : value instanceof Date
+    ? "date"
+    : value == null
+    ? "null"
+    : undefined as never;
+
+  return type == null ? detectedType : detectedType === type;
 }
 
 export function clamp(x: number, min: number, max: number): number {
@@ -200,4 +204,41 @@ export function equisizedSectionMiddlepoints(
   return equidistantPoints(n + 1, min, max)
     .slice(0, -1)
     .map((x) => x + (max - min) / n / 2);
+}
+
+export function formatValue(
+  value: Value,
+  options: FormatValueOptions = {},
+): string {
+  let result = "";
+
+  if (typeOf(value, "string") || typeOf(value, "boolean")) {
+    result = value.toString();
+  } else if (typeOf(value, "null")) {
+    result = "null";
+  } else if (typeOf(value, "number")) {
+    if (options.percent) {
+      value = value * 100;
+      if (options.suffix == null) options.suffix = " %";
+    }
+    if (options.round != null) {
+      value = Math.round(value * 10 ** options.round) / 10 ** options.round;
+    }
+
+    result = isNaN(value)
+      ? "∅"
+      : value === Infinity
+      ? "∞"
+      : value === -Infinity
+      ? "-∞"
+      : value.toString();
+  } else if (typeOf(value, "date")) {
+    result = formatDate(value, options.dateFormat ?? "yyyy-MM-dd HH:mm:ss", {});
+  }
+
+  return (options.prefix ?? "") + result + (options.suffix ?? "");
+}
+
+export function parseDate(value: string, format: string): Date {
+  return _parseDate(value, format, new Date(), undefined)
 }

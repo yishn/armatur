@@ -6,6 +6,13 @@ export type Tagged<T> = { [tag]?: T };
 
 export type Value = string | boolean | number | Date | null;
 
+export type ValueType =
+  | "string"
+  | "boolean"
+  | "number"
+  | "date"
+  | "null";
+
 export type ContinuousValue = Date | number;
 
 export type ValueJson<V extends Value> = V extends Date ? {
@@ -49,3 +56,11 @@ export type CollectIterFn<R extends Row, S extends Row> = (
   index: number,
   table: Table<R>,
 ) => S | undefined | Promise<S | undefined>;
+
+export interface FormatValueOptions {
+  prefix?: string;
+  suffix?: string;
+  round?: number;
+  percent?: boolean;
+  dateFormat?: string;
+}

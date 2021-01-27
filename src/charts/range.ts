@@ -4,19 +4,19 @@ import { Color, getDiscreteColor, hsva } from "./color.ts";
 import { ContinuousScale, DiscreteScale, Scale } from "./scale.ts";
 import { ChartScaleRanges, ChartScales } from "./types.ts";
 
-export function getDefaultXRange(scale: Scale<Value, number>): number[] {
+function getDefaultXRange(scale: Scale<Value, number> | undefined): number[] {
   return scale instanceof DiscreteScale
     ? equisizedSectionMiddlepoints(scale.domainValues.length)
     : [0, 1];
 }
 
-export function getDefaultYRange(scale: Scale<Value, number>): number[] {
+function getDefaultYRange(scale: Scale<Value, number> | undefined): number[] {
   return scale instanceof DiscreteScale
     ? equisizedSectionMiddlepoints(scale.domainValues.length)
     : [1, 0];
 }
 
-export function getDefaultColorRange(
+function getDefaultColorRange(
   scale: Color | Scale<Value, Color> | undefined,
 ): Color[] {
   return scale instanceof Color
@@ -34,7 +34,7 @@ export function getDefaultColorRange(
     ];
 }
 
-export function getDefaultSizeRange(
+function getDefaultSizeRange(
   scale: number | Scale<Value, number> | undefined,
 ): number[] {
   return typeof scale === "number"
@@ -48,9 +48,17 @@ export function getDefaultSizeRange(
 
 export function getDefaultRanges(scales: ChartScales): ChartScaleRanges {
   return {
-    x: getDefaultXRange(scales.x),
-    y: getDefaultYRange(scales.y),
-    color: getDefaultColorRange(scales.color),
-    size: getDefaultSizeRange(scales.size),
+    get x() {
+      return getDefaultXRange(scales.x);
+    },
+    get y() {
+      return getDefaultYRange(scales.y);
+    },
+    get color() {
+      return getDefaultColorRange(scales.color);
+    },
+    get size() {
+      return getDefaultSizeRange(scales.size);
+    },
   };
 }

@@ -2,6 +2,7 @@ import type { IntoTable, Row, Value } from "../types.ts";
 import type {
   ChartJson,
   ChartOptions,
+  ChartRow,
   ChartScaleDescriptors,
   ChartScales,
   ScaleDescriptor,
@@ -10,7 +11,8 @@ import { Table } from "../table.ts";
 import { asyncObjectMap } from "../utils.ts";
 import { Scale } from "./scale.ts";
 
-export abstract class Chart<R extends Row, S extends Row> extends Table<S> {
+export abstract class Chart<R extends Row, S extends ChartRow>
+  extends Table<S> {
   abstract readonly source: Table<R>;
   abstract readonly options: ChartOptions<R>;
   abstract readonly scales: Promise<ChartScales>;
