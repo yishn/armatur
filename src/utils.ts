@@ -166,8 +166,8 @@ export function typeOf(value: Value, type: "number"): value is number;
 export function typeOf(value: Value, type: "date"): value is Date;
 export function typeOf(value: Value, type: "null"): value is null;
 export function typeOf(value: Value, type: ValueType): boolean;
-export function typeOf(value: Value, type?: string): string | boolean {
-  let detectedType = typeof value === "string"
+export function typeOf(value: Value, type?: string): ValueType | boolean {
+  let detectedType: ValueType = typeof value === "string"
     ? "string"
     : typeof value === "boolean"
     ? "boolean"

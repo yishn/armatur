@@ -1,6 +1,17 @@
+import { Enum } from "./enum.ts";
 import { CircularDependencyError } from "./errors.ts";
 import { Table } from "./table.ts";
 import { objectMap } from "./utils.ts";
+
+export type ResolverEvent<V> = Enum<{
+  onInvalidate: {
+    viewNames: (keyof V)[];
+  };
+}>;
+
+export interface ResolverOptions<V> {
+  eventHandler?: (evt: ResolverEvent<V>) => unknown;
+}
 
 export class Resolver<V extends Record<string, () => Table>> {
   private _views: V;
@@ -9,8 +20,12 @@ export class Resolver<V extends Record<string, () => Table>> {
 
   static fromViews<V extends object>(
     views: V,
+    options?: ResolverOptions<V>,
   ): V extends Record<string, () => Table> ? Resolver<V> : never {
-    return new Resolver(views as Record<string, () => Table>) as never;
+    return new Resolver(
+      views as Record<string, () => Table>,
+      options as ResolverOptions<Record<string, () => Table>>,
+    ) as never;
   }
 
   get views(): V {
@@ -61,7 +76,7 @@ export class Resolver<V extends Record<string, () => Table>> {
     ) as V;
   }
 
-  private constructor(views: V) {
+  private constructor(views: V, public options: ResolverOptions<V> = {}) {
     this._views = views;
   }
 
@@ -82,15 +97,21 @@ export class Resolver<V extends Record<string, () => Table>> {
     return inner(name, result);
   }
 
-  clearCache(name?: keyof V): void {
+  invalidate(name?: keyof V): void {
     if (name == null) {
       this.cache.clear();
     } else {
-      this.cache.delete(name);
+      let viewNames = [name, ...this.getAllDependants(name)];
 
-      for (let dependant of this.getAllDependants(name)) {
-        this.cache.delete(dependant);
+      for (let viewName of viewNames) {
+        this.cache.delete(viewName);
       }
+
+      this.options.eventHandler?.({
+        onInvalidate: {
+          viewNames,
+        },
+      });
     }
   }
 }

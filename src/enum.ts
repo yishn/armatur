@@ -1,7 +1,7 @@
-declare const tag: unique symbol;
+import type { Tagged } from "./types.ts";
 
 export type Enum<T extends object> =
-  & { [tag]?: T }
+  & Tagged<T>
   & {
     [K in keyof T]:
       & { [L in Exclude<keyof T, K>]?: never }
