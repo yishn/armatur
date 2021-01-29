@@ -16,47 +16,49 @@ export class Resolver<V extends Record<string, () => Table>> {
   get views(): V {
     let self = this;
 
-    return objectMap(this._views, (name, fn) => ({
-      [name]: function (this: V): Table {
-        if (self.cache.has(name)) return self.cache.get(name)!;
+    return objectMap(
+      this._views,
+      (name, fn) =>
+        function (this: V): Table {
+          if (self.cache.has(name)) return self.cache.get(name)!;
 
-        let circularDependencyDetectingViews = (from: keyof V) =>
-          objectMap(
-            this,
-            (dependency, fn) => ({
-              [dependency]: (): Table => {
-                if (
-                  dependency === from ||
-                  self.getAllDependants(from).has(dependency)
-                ) {
-                  throw new CircularDependencyError();
+          let circularDependencyDetectingViews = (from: keyof V) =>
+            objectMap(
+              this,
+              (dependency, fn) =>
+                (): Table => {
+                  if (
+                    dependency === from ||
+                    self.getAllDependants(from).has(dependency)
+                  ) {
+                    throw new CircularDependencyError();
+                  }
+
+                  return fn.bind(
+                    circularDependencyDetectingViews(dependency),
+                  )();
+                },
+            ) as V;
+
+          let dependantsTrackingViews = objectMap(
+            circularDependencyDetectingViews(name),
+            (dependency, fn) =>
+              (): Table => {
+                if (!self.dependants.has(dependency)) {
+                  self.dependants.set(dependency, new Set());
                 }
+                self.dependants.get(dependency)!.add(name);
 
-                return fn.bind(circularDependencyDetectingViews(dependency))();
+                return fn();
               },
-            }),
           ) as V;
 
-        let dependantsTrackingViews = objectMap(
-          circularDependencyDetectingViews(name),
-          (dependency, fn) => ({
-            [dependency]: (): Table => {
-              if (!self.dependants.has(dependency)) {
-                self.dependants.set(dependency, new Set());
-              }
-              self.dependants.get(dependency)!.add(name);
+          let table = fn.bind(dependantsTrackingViews)();
+          self.cache.set(name, table);
 
-              return fn();
-            },
-          }),
-        ) as V;
-
-        let table = fn.bind(dependantsTrackingViews)();
-        self.cache.set(name, table);
-
-        return table;
-      },
-    })) as V;
+          return table;
+        },
+    ) as V;
   }
 
   private constructor(views: V) {

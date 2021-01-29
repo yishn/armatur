@@ -6,6 +6,7 @@ import type {
   ChartScaleDescriptors,
   ChartScales,
   ScaleDescriptor,
+  ScaleFromDescriptor,
 } from "./types.ts";
 import { Table } from "../table.ts";
 import { asyncObjectMap } from "../utils.ts";
@@ -33,14 +34,15 @@ export async function getScalesFromDescriptors<
   source: IntoTable<R>,
   descriptors: D,
 ): Promise<ChartScales<D>> {
-  return await asyncObjectMap(descriptors, async (key, value) => {
-    return {
-      [key]: "type" in value && value != null
+  return await asyncObjectMap(
+    descriptors,
+    async (key, value) => {
+      return "type" in value && value != null
         ? await Scale.fromDomain(
           source,
           value as unknown as ScaleDescriptor<R, Value, any>,
         )
-        : value,
-    } as unknown as Partial<ChartScales<D>>;
-  });
+        : value as D[keyof D];
+    },
+  ) as unknown as ChartScales<D>;
 }

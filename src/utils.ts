@@ -125,30 +125,38 @@ export function parseRow<R extends Row>(json: string & Tagged<R>): R {
   return jsonToRow(JSON.parse(json));
 }
 
-export function objectMap<T extends object, U extends object>(
+export function objectMap<T extends object, U>(
   obj: T,
   fn: <K extends keyof T>(
     key: K,
     value: T[K],
-  ) => Partial<U>,
-): U {
+  ) => U,
+): Record<keyof T, U> {
   return Object.entries(obj)
-    .map(([key, value]) => fn(key as keyof T, value))
-    .reduce((acc, part) => ({ ...acc, ...part }), {} as Partial<U>) as U;
+    .map(([key, value]) => [key, fn(key as keyof T, value)] as const)
+    .reduce(
+      (acc, [key, value]) => ({ ...acc, [key]: value }),
+      {} as Record<keyof T, U>,
+    );
 }
 
-export async function asyncObjectMap<T extends object, U extends object>(
+export async function asyncObjectMap<T extends object, U>(
   obj: T,
   fn: <K extends keyof T>(
     key: K,
     value: T[K],
-  ) => Partial<U> | Promise<Partial<U>>,
-): Promise<U> {
+  ) => U | Promise<U>,
+): Promise<Record<keyof T, U>> {
   return (await Promise.all(
     Object.entries(obj)
-      .map(([key, value]) => fn(key as keyof T, value)),
-  ) as Partial<U>[])
-    .reduce((acc, part) => ({ ...acc, ...part }), {} as Partial<U>) as U;
+      .map(async ([key, value]) =>
+        [key, await fn(key as keyof T, value)] as const
+      ),
+  ))
+    .reduce(
+      (acc, [key, value]) => ({ ...acc, [key]: value }),
+      {} as Record<keyof T, U>,
+    );
 }
 
 export function typeOf(value: Value): ValueType;
@@ -240,5 +248,5 @@ export function formatValue(
 }
 
 export function parseDate(value: string, format: string): Date {
-  return _parseDate(value, format, new Date(), undefined)
+  return _parseDate(value, format, new Date(), undefined);
 }

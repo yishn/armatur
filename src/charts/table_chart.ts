@@ -32,9 +32,10 @@ export class TableChart<R extends Row> extends Chart<R, TableChartRow<R>> {
       source.map((row, i) => ({
         index: i,
         display: stringifyRow(
-          objectMap(row, (key, value) => ({
-            [key]: formatValue(value, options.columnOptions?.[key]),
-          } as Partial<MappedRow<R, string>>)),
+          objectMap(
+            row,
+            (key, value) => formatValue(value, options.columnOptions?.[key]),
+          ),
         ),
       })),
     );
