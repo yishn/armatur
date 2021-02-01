@@ -4,7 +4,7 @@ import type {
   DiscreteScaleDescriptor,
   ScaleDescriptor,
 } from "./types.ts";
-import { Deferred, deferred } from "../deps.ts";
+import { Deferred, deferred } from "../../deps.ts";
 import type { Table } from "../table.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Color } from "./color.ts";

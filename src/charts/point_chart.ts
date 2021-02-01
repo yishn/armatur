@@ -1,7 +1,7 @@
 import type { Row, Value } from "../types.ts";
 import type { ChartScales, ScaleDescriptor } from "./types.ts";
 import type { Table } from "../table.ts";
-import { Deferred, deferred } from "../deps.ts";
+import { Deferred, deferred } from "../../deps.ts";
 import { Color } from "./color.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Scale } from "./scale.ts";

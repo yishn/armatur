@@ -7,7 +7,7 @@ import type {
 } from "./types.ts";
 import { Color } from "./color.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
-import { Deferred, deferred } from "../deps.ts";
+import { Deferred, deferred } from "../../deps.ts";
 import { Table } from "../table.ts";
 import { DiscreteScale, Scale } from "./scale.ts";
 import { getDefaultRanges } from "./range.ts";

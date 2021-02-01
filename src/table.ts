@@ -4,7 +4,6 @@ import type {
   IntoTable,
   IterFn,
   Row,
-  RowJson,
   TableJson,
   Value,
 } from "./types.ts";

@@ -1,10 +1,10 @@
-import { Enum } from "./enum.ts";
+import { Enum } from "../deps.ts";
 import { CircularDependencyError } from "./errors.ts";
 import { Table } from "./table.ts";
 import { objectMap } from "./utils.ts";
 
 export type ResolverEvent<V> = Enum<{
-  onInvalidate: {
+  DataInvalidationEvent: {
     viewNames: (keyof V)[];
   };
 }>;
@@ -108,7 +108,7 @@ export class Resolver<V extends Record<string, () => Table>> {
       }
 
       this.options.eventHandler?.({
-        onInvalidate: {
+        DataInvalidationEvent: {
           viewNames,
         },
       });

@@ -1,6 +1,6 @@
 import { FormatValueOptions, Row, Tagged, Value } from "../types.ts";
 import { Chart } from "./chart.ts";
-import { Deferred, deferred } from "../deps.ts";
+import { Deferred, deferred } from "../../deps.ts";
 import { Table } from "../table.ts";
 import { formatValue, objectMap, stringifyRow } from "../utils.ts";
 

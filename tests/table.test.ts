@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertThrows } from "./deps.ts";
+import { assert, assertEquals, assertThrows } from "../dev_deps.ts";
 import { Table } from "../src/mod.ts";
 
 let table = new Table(async () => [1, 2, 3].map((val) => ({ val })));

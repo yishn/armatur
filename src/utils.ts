@@ -1,4 +1,4 @@
-import { formatDate, parseDate as _parseDate } from "./deps.ts";
+import { formatDate, parseDate as _parseDate } from "../deps.ts";
 import type {
   ContinuousValue,
   FormatValueOptions,
