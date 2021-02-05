@@ -1,13 +1,25 @@
-import { Enum } from "../deps.ts";
+import { Enum, memo, ofType } from "../deps.ts";
 import { CircularDependencyError } from "./errors.ts";
 import { Table } from "./table.ts";
 import { objectMap } from "./utils.ts";
 
-export type ResolverEvent<V> = Enum<{
-  DataInvalidationEvent: {
-    viewNames: (keyof V)[];
-  };
-}>;
+const ResolverEventVariants = {
+  DataInvalidationEvent: ofType<{
+    viewNames: unknown[];
+  }>(),
+};
+
+export type ResolverEvent<V> = Enum<
+  typeof ResolverEventVariants & {
+    DataInvalidationEvent: {
+      viewNames: (keyof V)[];
+    };
+  }
+>;
+
+export const ResolverEvent = memo(<V>() =>
+  Enum.factory<ResolverEvent<V>>(ResolverEventVariants)
+);
 
 export interface ResolverOptions<V> {
   eventHandler?: (evt: ResolverEvent<V>) => unknown;
@@ -107,11 +119,9 @@ export class Resolver<V extends Record<string, () => Table>> {
         this.cache.delete(viewName);
       }
 
-      this.options.eventHandler?.({
-        DataInvalidationEvent: {
-          viewNames,
-        },
-      });
+      this.options.eventHandler?.(
+        ResolverEvent<V>().DataInvalidationEvent({ viewNames }),
+      );
     }
   }
 }
