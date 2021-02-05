@@ -4,7 +4,6 @@ import type {
   DiscreteScaleDescriptor,
   DiscreteScaleOptions,
   Interpolatable,
-  InterpolationFn,
   ScaleDescriptor,
 } from "./types.ts";
 import type { ContinuousValue, IntoTable, Row, Value } from "../types.ts";
@@ -68,7 +67,6 @@ export class ContinuousScale<
 > extends Scale<V, T> {
   includeZero?: boolean;
   range?: T[];
-  rangeInterpolation?: InterpolationFn;
 
   static async fromDomain<
     R extends Row,
@@ -99,7 +97,6 @@ export class ContinuousScale<
 
     this.includeZero = options.includeZero;
     this.range = options.range;
-    this.rangeInterpolation = options.rangeInterpolation;
   }
 
   map(value: V, defaultRange: T[]): T | undefined {
@@ -114,6 +111,6 @@ export class ContinuousScale<
 
     let lambda = (continuousValueToNumber(value) - min) / (max - min);
 
-    return piecewiseInterpolation(lambda, range, this.rangeInterpolation);
+    return piecewiseInterpolation(lambda, range);
   }
 }

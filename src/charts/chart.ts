@@ -1,12 +1,10 @@
 import type { IntoTable, Row, Value } from "../types.ts";
 import type {
-  ChartJson,
   ChartOptions,
   ChartRow,
   ChartScaleDescriptors,
   ChartScales,
   ScaleDescriptor,
-  ScaleFromDescriptor,
 } from "./types.ts";
 import { Table } from "../table.ts";
 import { asyncObjectMap } from "../utils.ts";
@@ -17,14 +15,6 @@ export abstract class Chart<R extends Row, S extends ChartRow>
   abstract readonly source: Table<R>;
   abstract readonly options: ChartOptions<R>;
   abstract readonly scales: Promise<ChartScales>;
-
-  async toJSON(): Promise<ChartJson<R, S>> {
-    return {
-      options: this.options,
-      source: (await this.source.toJSON()).data,
-      data: (await Table.prototype.toJSON.bind(this)()).data,
-    };
-  }
 }
 
 export async function getScalesFromDescriptors<
