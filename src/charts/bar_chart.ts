@@ -11,7 +11,7 @@ import { Deferred, deferred } from "../../deps.ts";
 import { Table } from "../table.ts";
 import { DiscreteScale, Scale } from "./scale.ts";
 import { getDefaultRanges } from "./range.ts";
-import { equisizedSectionMiddlepoints } from "../utils.ts";
+import { equalValues, equisizedSectionMiddlepoints } from "../utils.ts";
 
 export interface BarChartScaleDescriptors<R extends Row> {
   x: ScaleDescriptor<R, Value, number>;
@@ -33,6 +33,8 @@ export type BarChartRow = {
   index: number;
   x: number;
   y: number;
+  width: number;
+  height: number;
   color: string;
 };
 
@@ -95,46 +97,93 @@ export class BarChart<R extends Row> extends Chart<R, BarChartRow> {
       let colorGroupsCount = colorIndexScale.domainValues.length;
       let keysCount = keyScale.domainValues.length;
 
-      return source.map((row, i, table) => {
-        let x = scales.x.map(
-          scaleDescriptors.x.field(row, i, table),
-          defaultRanges.x,
-        );
-        let y = scales.y.map(
-          scaleDescriptors.y.field(row, i, table),
-          defaultRanges.y,
-        );
-        let key = options.keyAxis === "y" ? y : x;
-        let color = colorGroupsCount <= 1
-          ? defaultRanges.color[0]
-          : (scales.color as Scale<Value, Color>).map(
-            colorFieldFn(row, i, table),
-            defaultRanges.color,
-          );
-        if (key == null || color == null) return;
+      let result = source
+        .map((row, i, table) => {
+          let [xValue, yValue] = [
+            scaleDescriptors.x.field(row, i, table),
+            scaleDescriptors.y.field(row, i, table),
+          ] as const;
+          let x = scales.x.map(xValue, defaultRanges.x) ?? null;
+          let y = scales.y.map(yValue, defaultRanges.y) ?? null;
+          let [key, value] = options.keyAxis === "y" ? [y, x] : [x, y];
+          let keyFieldValue = options.keyAxis === "y" ? yValue : xValue;
 
-        if (!options.stacked) {
-          let min = key - 1 / keysCount / 2;
-          let max = key + 1 / keysCount / 2;
+          let color: string | null = (
+            colorGroupsCount <= 1
+              ? defaultRanges.color[0]
+              : (scales.color as Scale<Value, Color>).map(
+                colorFieldFn(row, i, table),
+                defaultRanges.color,
+              )
+          )?.toString() ?? null;
 
-          key = colorIndexScale.map(
-            colorFieldFn(row, i, table),
-            equisizedSectionMiddlepoints(colorGroupsCount, min, max),
-          );
+          return { key, value, keyFieldValue, color };
+        })
+        .map(async ({ key, value, keyFieldValue, color }, i, table) => {
+          if (key == null || value == null || color == null) return;
 
-          if (options.keyAxis === "y") y = key;
-          else x = key;
-        }
+          let row = (await source.nth(i))!;
+          let barBaseSize = 1 / keysCount;
+          let stackedValue = 0;
 
-        if (x == null || y == null) return;
+          if (!options.stacked) {
+            barBaseSize /= colorGroupsCount;
+            let min = key - 1 / keysCount / 2;
+            let max = key + 1 / keysCount / 2;
 
-        return {
-          index: i,
-          x,
-          y,
-          color: color.toString(),
-        };
-      });
+            key = colorIndexScale.map(
+              colorFieldFn(row, i, source),
+              equisizedSectionMiddlepoints(colorGroupsCount, min, max),
+            ) ?? null;
+          } else {
+            stackedValue = (
+              await table
+                .take(i)
+                .filter((prevRow) =>
+                  prevRow.value != null &&
+                  equalValues(prevRow.keyFieldValue, keyFieldValue)
+                )
+                .maxBy((prevRow) => prevRow.value)
+            )?.value ?? 0;
+          }
+
+          if (key == null || value == null) return;
+
+          let [x, y] = options.keyAxis === "y"
+            ? [stackedValue + value, key - barBaseSize / 2]
+            : [key - barBaseSize / 2, stackedValue + value];
+          let [width, height] = options.keyAxis === "y"
+            ? [value, barBaseSize]
+            : [barBaseSize, value];
+
+          return {
+            index: i,
+            x,
+            y,
+            width,
+            height,
+            color,
+          };
+        });
+
+      if (options.stacked) {
+        // Normalize values if stacked
+
+        const valueAxis = options.keyAxis === "y" ? "x" : "y";
+
+        let maxValue = (await result.maxBy((row) =>
+          row[valueAxis]
+        ))?.[valueAxis] ?? 1;
+
+        result = result.extend((row) => ({
+          x: valueAxis === "x" ? row.x / maxValue : row.x,
+          y: valueAxis === "y" ? row.y / maxValue : row.y,
+          width: valueAxis === "x" ? row.width / maxValue : row.width,
+          height: valueAxis === "y" ? row.height / maxValue : row.height,
+        }));
+      }
+
+      return result;
     });
 
     this.options = options;

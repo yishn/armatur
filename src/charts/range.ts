@@ -13,7 +13,7 @@ function getDefaultXRange(scale: Scale<Value, number> | undefined): number[] {
 function getDefaultYRange(scale: Scale<Value, number> | undefined): number[] {
   return scale instanceof DiscreteScale
     ? equisizedSectionMiddlepoints(scale.domainValues.length)
-    : [1, 0];
+    : [0, 1];
 }
 
 function getDefaultColorRange(

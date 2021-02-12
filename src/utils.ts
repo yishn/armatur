@@ -321,7 +321,7 @@ export function formatValue(
   if (typeOf(value, "string") || typeOf(value, "boolean")) {
     result = value.toString();
   } else if (typeOf(value, "null")) {
-    result = "null";
+    result = "-";
   } else if (typeOf(value, "number")) {
     if (options.percent) {
       value = value * 100;
