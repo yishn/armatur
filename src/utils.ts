@@ -214,6 +214,104 @@ export function equisizedSectionMiddlepoints(
     .map((x) => x + (max - min) / n / 2);
 }
 
+export function floor(a: number, n: number = 0): number {
+  return Math.floor(a * 10 ** n) / 10 ** n;
+}
+
+export function ceil(a: number, n: number = 0): number {
+  return Math.ceil(a * 10 ** n) / 10 ** n;
+}
+
+export function round(a: number, n: number = 0): number {
+  return Math.round(a * 10 ** n) / 10 ** n;
+}
+
+export enum RoundDateUnit {
+  Year,
+  HalfYear,
+  QuarterYear,
+  Month,
+  Week,
+  Day,
+  Hour,
+  Minute,
+  Second,
+}
+
+export const minRoundDateUnit = RoundDateUnit.Year;
+export const maxRoundDateUnit = RoundDateUnit.Second;
+
+export function floorDate(date: Date, unit: RoundDateUnit): Date {
+  let result = new Date(date.getTime());
+
+  if (unit >= RoundDateUnit.Second) result.setMilliseconds(0);
+  if (unit >= RoundDateUnit.Minute) result.setSeconds(0);
+  if (unit >= RoundDateUnit.Hour) result.setMinutes(0);
+  if (unit >= RoundDateUnit.Day) result.setHours(0);
+
+  if (unit >= RoundDateUnit.Week) {
+    result.setDate(result.getDate() - result.getDay());
+  } else if (unit >= RoundDateUnit.Month) {
+    result.setDate(1);
+  }
+
+  if (unit >= RoundDateUnit.QuarterYear) {
+    result.setMonth(Math.round(result.getMonth() / 3) * 3);
+  } else if (unit >= RoundDateUnit.HalfYear) {
+    result.setMonth(Math.round(result.getMonth() / 6) * 6);
+  } else if (unit >= RoundDateUnit.Year) {
+    result.setMonth(0);
+  }
+
+  return result;
+}
+
+export function addUnitToDate(date: Date, unit: RoundDateUnit): Date {
+  let result = new Date(date.getTime());
+
+  if (unit === RoundDateUnit.Year) {
+    result.setFullYear(result.getFullYear() + 1);
+  } else if (unit === RoundDateUnit.HalfYear) {
+    result.setMonth(result.getMonth() + 6);
+  } else if (unit === RoundDateUnit.QuarterYear) {
+    result.setMonth(result.getMonth() + 3);
+  } else if (unit === RoundDateUnit.Month) {
+    result.setMonth(result.getMonth() + 1);
+  } else if (unit === RoundDateUnit.Week) {
+    result.setDate(result.getDate() + 7);
+  } else if (unit === RoundDateUnit.Day) {
+    result.setDate(result.getDate() + 1);
+  } else if (unit === RoundDateUnit.Hour) {
+    result.setHours(result.getHours() + 1);
+  } else if (unit === RoundDateUnit.Minute) {
+    result.setMinutes(result.getMinutes() + 1);
+  } else if (unit === RoundDateUnit.Second) {
+    result.setSeconds(result.getSeconds() + 1);
+  }
+
+  return result;
+}
+
+export function ceilDate(date: Date, unit: RoundDateUnit): Date {
+  let result = floorDate(date, unit);
+  if (result.getTime() === date.getTime()) return result;
+
+  return addUnitToDate(date, unit);
+}
+
+export function roundDate(date: Date, unit: RoundDateUnit): Date {
+  let floored = floorDate(date, unit);
+  let ceiled = ceilDate(date, unit);
+
+  if (
+    (date.getTime() - floored.getTime()) < (ceiled.getTime() - date.getTime())
+  ) {
+    return floored;
+  } else {
+    return ceiled;
+  }
+}
+
 export function formatValue(
   value: Value,
   options: FormatValueOptions = {},
@@ -230,11 +328,11 @@ export function formatValue(
       if (options.suffix == null) options.suffix = " %";
     }
     if (options.round != null) {
-      value = Math.round(value * 10 ** options.round) / 10 ** options.round;
+      value = round(value, options.round);
     }
 
     result = isNaN(value)
-      ? "∅"
+      ? "?"
       : value === Infinity
       ? "∞"
       : value === -Infinity
