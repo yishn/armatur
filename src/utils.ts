@@ -342,7 +342,13 @@ export function formatValue(
     result = formatDate(value, options.dateFormat ?? "yyyy-MM-dd HH:mm:ss", {});
   }
 
-  return (options.prefix ?? "") + result + (options.suffix ?? "");
+  result = (options.prefix ?? "") + result + (options.suffix ?? "");
+
+  if (options.maxLength != null && result.length > options.maxLength) {
+    result = result.slice(0, options.maxLength - 1) + "…";
+  }
+
+  return result;
 }
 
 export function parseDate(value: string, format: string): Date {

@@ -63,4 +63,5 @@ export interface FormatValueOptions {
   round?: number;
   percent?: boolean;
   dateFormat?: string;
+  maxLength?: number;
 }
