@@ -323,21 +323,30 @@ export function formatValue(
   } else if (typeOf(value, "null")) {
     result = "-";
   } else if (typeOf(value, "number")) {
-    if (options.percent) {
-      value = value * 100;
-      if (options.suffix == null) options.suffix = " %";
-    }
-    if (options.round != null) {
-      value = round(value, options.round);
-    }
+    if (isNaN(value)) {
+      result = "?";
+    } else if (!isFinite(value)) {
+      result = (value < 0 ? "-" : "") + "∞";
+    } else {
+      if (options.percent) {
+        value = value * 100;
+        if (options.suffix == null) options.suffix = " %";
+      }
+      if (options.round != null) {
+        value = round(value, options.round);
+      }
 
-    result = isNaN(value)
-      ? "?"
-      : value === Infinity
-      ? "∞"
-      : value === -Infinity
-      ? "-∞"
-      : value.toString();
+      let [, int, decimal] =
+        (value.toString().match(/(\d+)(\.\d+)?/) ?? []) as string[];
+
+      if (int == null) {
+        result = value.toString();
+      } else {
+        int = [...[...int].reverse().join("").replace(/\d{3}/g, "$&,")]
+          .reverse().join("");
+        result = int + (decimal ?? "");
+      }
+    }
   } else if (typeOf(value, "date")) {
     result = formatDate(value, options.dateFormat ?? "yyyy-MM-dd HH:mm:ss", {});
   }

@@ -1,6 +1,5 @@
 import { FormatValueOptions, Row, Tagged, Value } from "../types.ts";
 import { Chart } from "./chart.ts";
-import { Deferred, deferred } from "../../deps.ts";
 import { Table } from "../table.ts";
 import { formatValue, objectMap, stringifyRow } from "../utils.ts";
 
@@ -21,7 +20,7 @@ export type TableChartRow<R extends Row> = {
 };
 
 export class TableChart<R extends Row> extends Chart<R, TableChartRow<R>> {
-  readonly scales: Deferred<{}> = deferred();
+  readonly scales = Promise.resolve({});
   readonly options: TableChartOptions<R>;
 
   constructor(
