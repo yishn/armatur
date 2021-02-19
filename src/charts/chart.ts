@@ -15,6 +15,10 @@ export abstract class Chart<R extends Row, S extends ChartRow>
   abstract readonly source: Table<R>;
   abstract readonly options: ChartOptions<R>;
   abstract readonly scales: Promise<ChartScales>;
+
+  abstract render<
+    F extends (tagName: string, props: any, ...children: any[]) => unknown,
+  >(h: F, width: number, height: number): Promise<ReturnType<F>>;
 }
 
 export async function getScalesFromDescriptors<

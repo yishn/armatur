@@ -1,3 +1,4 @@
+/** @jsx h */
 import type { Row, Value } from "../types.ts";
 import type {
   ChartScales,
@@ -5,6 +6,7 @@ import type {
   DiscreteScaleDescriptor,
   ScaleDescriptor,
 } from "./types.ts";
+import type {} from "./jsx.d.ts";
 import { Color } from "./color.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Deferred, deferred } from "../../deps.ts";
@@ -187,5 +189,12 @@ export class BarChart<R extends Row> extends Chart<R, BarChartRow> {
     });
 
     this.options = options;
+  }
+
+  async render<
+    F extends (tagName: string, props: any, ...children: any[]) => unknown,
+  >(h: F, width: number, height: number): Promise<ReturnType<F>> {
+    return <svg width={width} height={height}>
+    </svg>;
   }
 }

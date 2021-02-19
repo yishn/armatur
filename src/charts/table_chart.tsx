@@ -1,3 +1,5 @@
+/** @jsx h */
+import type {} from "./jsx.d.ts";
 import { FormatValueOptions, Row, Tagged, Value } from "../types.ts";
 import { Chart } from "./chart.ts";
 import { Table } from "../table.ts";
@@ -43,5 +45,12 @@ export class TableChart<R extends Row> extends Chart<R, TableChartRow<R>> {
       ...options,
       scales: {},
     };
+  }
+
+  async render<
+    F extends (tagName: string, props: any, ...children: any[]) => unknown,
+  >(h: F, width: number, height: number): Promise<ReturnType<F>> {
+    return <svg width={width} height={height}>
+    </svg>;
   }
 }

@@ -1,6 +1,8 @@
+/** @jsx h */
 import type { Row, Value } from "../types.ts";
 import type { ChartScales, ScaleDescriptor } from "./types.ts";
 import type { Table } from "../table.ts";
+import type {} from "./jsx.d.ts";
 import { Deferred, deferred } from "../../deps.ts";
 import { Color } from "./color.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
@@ -84,5 +86,12 @@ export class PointChart<R extends Row> extends Chart<R, PointChartRow> {
         };
       });
     });
+  }
+
+  async render<
+    F extends (tagName: string, props: any, ...children: any[]) => unknown,
+  >(h: F, width: number, height: number): Promise<ReturnType<F>> {
+    return <svg width={width} height={height}>
+    </svg>;
   }
 }

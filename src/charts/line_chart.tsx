@@ -1,11 +1,13 @@
+/** @jsx h */
 import type { Row, Value } from "../types.ts";
 import type {
   ChartScales,
   DiscreteScaleDescriptor,
   ScaleDescriptor,
 } from "./types.ts";
-import { Deferred, deferred } from "../../deps.ts";
 import type { Table } from "../table.ts";
+import type {} from "./jsx.d.ts";
+import { Deferred, deferred } from "../../deps.ts";
 import { Chart, getScalesFromDescriptors } from "./chart.ts";
 import { Color } from "./color.ts";
 import { Scale } from "./scale.ts";
@@ -89,5 +91,12 @@ export class LineChart<R extends Row> extends Chart<R, LineChartRow> {
           };
         });
     });
+  }
+
+  async render<
+    F extends (tagName: string, props: any, ...children: any[]) => unknown,
+  >(h: F, width: number, height: number): Promise<ReturnType<F>> {
+    return <svg width={width} height={height}>
+    </svg>;
   }
 }
