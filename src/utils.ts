@@ -344,7 +344,7 @@ export function formatValue(
       } else {
         int = [...[...int].reverse().join("").replace(/\d{3}/g, "$&,")]
           .reverse().join("");
-        result = int + (decimal ?? "");
+        result = (value < 0 ? "-" : "") + int + (decimal ?? "");
       }
     }
   } else if (typeOf(value, "date")) {
